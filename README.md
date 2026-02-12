@@ -1,1 +1,1 @@
-# SDSU-Lost-and-Found backend code.
+# SDSU-Lost-and-Found Website code.
