@@ -1,1 +1,899 @@
 openapi: 3.0.3
+info:
+  title: SDSU Lost & Found API
+  version: 1.0.0
+  description: >
+    Campus Lost and Found System API. Supports auth (JWT), item posts, users, and messaging.
+
+servers:
+  - url: http://localhost:8000
+    description: Local dev
+
+tags:
+  - name: Auth
+  - name: Items
+  - name: Users
+  - name: Tokens
+  - name: Conversations
+  - name: Messages
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+
+    LimitQuery:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    OffsetQuery:
+      name: offset
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
+  schemas:
+    Error:
+      type: object
+      additionalProperties: false
+      properties:
+        error:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required: [error]
+
+    Success:
+      type: object
+      additionalProperties: false
+      properties:
+        success:
+          type: boolean
+          example: true
+      required: [success]
+
+    # ---- Auth ----
+    SignupRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+      required: [email, password]
+
+    SignupResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        authURL:
+          type: string
+          description: OAuth2 authorization URL (if your flow uses it)
+          example: "https://auth.example.edu/authorize?client_id=..."
+        userId:
+          type: integer
+          example: 123
+      required: [authURL, userId]
+
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [email, password]
+
+    LoginResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        token:
+          type: string
+          description: JWT access token
+        userId:
+          type: integer
+      required: [token, userId]
+
+    # ---- Users ----
+    UserPublic:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+        created_at:
+          type: string
+          format: date-time
+      required: [id, email]
+
+    UserUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          nullable: true
+        email:
+          type: string
+          format: email
+      required: [email]
+
+    UserUpdateResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        success:
+          type: boolean
+          example: true
+        user:
+          $ref: "#/components/schemas/UserPublic"
+      required: [success, user]
+
+    # ---- Tokens ----
+    TokenRecord:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        getToken:
+          type: string
+        refreshToken:
+          type: string
+        expiryDate:
+          type: string
+          format: date-time
+        tokenType:
+          type: string
+          example: "Bearer"
+      required: [id, user_id, tokenType]
+
+    TokenUpsert:
+      type: object
+      additionalProperties: false
+      properties:
+        getToken:
+          type: string
+        refreshToken:
+          type: string
+        expiryDate:
+          type: string
+          format: date-time
+        tokenType:
+          type: string
+          example: "Bearer"
+      required: [getToken, refreshToken, expiryDate, tokenType]
+
+    # ---- Items ----
+    ItemStatus:
+      type: string
+      description: Status updates such as Found or Returned.
+      enum: [LOST, FOUND, RETURNED]
+
+    Item:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        user_id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        image_url:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/ItemStatus"
+        given_back:
+          type: boolean
+          description: True if returned to owner (or no longer held by finder).
+        created_at:
+          type: string
+          format: date-time
+      required: [id, user_id, title, description, location, status, given_back, created_at]
+
+    ItemCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+        desc:
+          type: string
+          description: Alias for description (matches your table naming)
+        description:
+          type: string
+          description: Preferred field name
+        location:
+          type: string
+        image_url:
+          type: string
+          nullable: true
+        status:
+          $ref: "#/components/schemas/ItemStatus"
+        time:
+          type: string
+          format: date-time
+          nullable: true
+          description: Optional client-sent timestamp
+      required: [title, location]
+
+    ItemCreateResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        success:
+          type: boolean
+          example: true
+        item_id:
+          type: integer
+          example: 456
+      required: [success, item_id]
+
+    ItemUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        status:
+          $ref: "#/components/schemas/ItemStatus"
+        given_back:
+          type: boolean
+      required: [status]
+
+    # ---- Conversations / Messages ----
+    Conversation:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        participant_ids:
+          type: array
+          items:
+            type: integer
+        created_at:
+          type: string
+          format: date-time
+      required: [id, participant_ids, created_at]
+
+    ConversationCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        recipient_id:
+          type: integer
+          minimum: 1
+      required: [recipient_id]
+
+    ConversationSummary:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        last_message:
+          type: string
+          nullable: true
+        partner_name:
+          type: string
+          nullable: true
+      required: [id]
+
+    Message:
+      type: object
+      additionalProperties: false
+      properties:
+        id:
+          type: integer
+        sender_id:
+          type: integer
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required: [id, sender_id, content, timestamp]
+
+    MessageCreate:
+      type: object
+      additionalProperties: false
+      properties:
+        content:
+          type: string
+          minLength: 1
+      required: [content]
+
+paths:
+  # ---------------- AUTH ----------------
+  /signup:
+    post:
+      tags: [Auth]
+      summary: Sign up user & start OAuth2
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+      responses:
+        "200":
+          description: Signup started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /login:
+    post:
+      tags: [Auth]
+      summary: Login and return JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ---------------- ITEMS ----------------
+  /home:
+    get:
+      tags: [Items]
+      summary: Retrieve item posts
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/LimitQuery"
+      responses:
+        "200":
+          description: Items list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      tags: [Items]
+      summary: Create a lost/found item post
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemCreate"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ItemCreateResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /home/{id}:
+    get:
+      tags: [Items]
+      summary: Retrieve a specific item post
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [Items]
+      summary: Update an item post (e.g., status)
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ItemUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden (not owner / insufficient permissions)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Items]
+      summary: Delete item post
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ---------------- USERS ----------------
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Retrieve user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: User
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPublic"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [Users]
+      summary: Update user info
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserUpdateResponse"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Users]
+      summary: Delete user
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ---------------- TOKENS ----------------
+  /user/{id}/token:
+    get:
+      tags: [Tokens]
+      summary: Retrieve user OAuth2 token record
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Token record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenRecord"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/{id}/token:
+    post:
+      tags: [Tokens]
+      summary: Store user OAuth2 token record
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenUpsert"
+      responses:
+        "200":
+          description: Stored
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  # ---------------- CONVERSATIONS ----------------
+  /conversations:
+    post:
+      tags: [Conversations]
+      summary: Create or find a chat between 2 users
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConversationCreate"
+      responses:
+        "200":
+          description: Conversation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    get:
+      tags: [Conversations]
+      summary: List all active chats for the logged-in user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Conversations summary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ConversationSummary"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /conversations/{id}/messages:
+    get:
+      tags: [Messages]
+      summary: Retrieve message history
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+        - $ref: "#/components/parameters/LimitQuery"
+        - $ref: "#/components/parameters/OffsetQuery"
+      responses:
+        "200":
+          description: Messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden (not a participant)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      tags: [Messages]
+      summary: Send a new message
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MessageCreate"
+      responses:
+        "201":
+          description: Message created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Message"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden (not a participant)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /messages/{id}:
+    delete:
+      tags: [Messages]
+      summary: Delete a specific message
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/IdPath"
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Success"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
