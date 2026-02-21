@@ -4,7 +4,7 @@ info:
   version: 1.0.0
   description: >
     Backend API for the SDSU Lost & Found system. Users can sign up/login, create lost/found
-    item posts, update item status (e.g., FOUND/RETURNED), and message other users to recover items.
+    item posts, update item status and message other users to recover items.
 
 servers:
   - url: http://localhost:8000
