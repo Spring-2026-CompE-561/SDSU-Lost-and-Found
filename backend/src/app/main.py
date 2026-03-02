@@ -1,7 +1,7 @@
-def main():
-    print("Hello from sdsu-lost-and-found!")
-    print("This is a test from Alan to see how Git works!")
+from fastapi import FastAPI
 
+app = FastAPI()
 
-if __name__ == "__main__":
-    main()
+@app.get("/")
+def root():
+    return {"message": "Hello, World!"}
