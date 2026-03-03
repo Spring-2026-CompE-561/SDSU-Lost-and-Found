@@ -1,6 +1,8 @@
-# src/app/main.py
 from fastapi import FastAPI
-from app.core.db import engine, Base
+from app.core.db import Base, engine
+
+# IMPORTANT: import models so Base knows them
+from app.models.user import User  # noqa: F401
 
 app = FastAPI()
 
