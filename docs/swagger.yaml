@@ -1,0 +1,177 @@
+openapi: 3.0.3
+info:
+  title: SDSU Lost and Found
+  version: 1.0.0
+  description: >
+    Users can create an account and log in securely to access the system, 
+    they are able to post detailed reports of lost or found items including descriptions, images, dates and specific locations. 
+    The web will also include search and filtering tools that allows users to browse items by date and location to quickly identify lost items. 
+    Each item is tracked through status updates such as Found, or Returned. 
+    A built in messaging system enables communications between users and email notifications to keep users informed
+    of updates and reminders related to their posts.
+
+servers:
+  - url: http://localhost:8000
+    description: FastAPI (local dev)
+
+paths:
+  /signup:
+    post:
+      summary: Register a new user and start OAuth flow
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+              required: [email, password]
+      responses:
+        "200":
+          description: OAuth URL + created user
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  authUrl:
+                    type: string
+                  userId:
+                    type: string
+  /login:
+    post:
+      summary: Login a user and issue JWT
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  userId:
+                    type: string
+  /users/{id}:
+    get:
+      summary: Retrieve user profile
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: User information
+          content:
+            application/json:
+              schema:
+    put:
+      summary: Update user info
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+      responses:
+        "200":
+          description: Update success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+    delete:
+      summary: Delete user account
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deletion confirmation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /users/{id}/token:
+    get:
+      summary: Retrieve user OAuth token
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OAuth token info
+          content:
+            application/json:
+              schema:
+    post:
+      summary: Store or update user OAuth token
+      tags: [Users]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+      responses:
+        "200":
+          description: Token saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
