@@ -1,5 +1,10 @@
-from fastapi import APIRouter, status
+# app/routes/users.py
+from typing import Annotated
 
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
+
+from app.core.db import get_db
 from app.schemas.user import (
     LoginRequest,
     LoginResponse,
@@ -10,52 +15,47 @@ from app.schemas.user import (
     UserUpdate,
     UserUpdateResponse,
 )
-from app.models.user import User
+from app.services.user import UserService
 
 api_router = APIRouter(prefix="/user", tags=["users"])
 
+DB = Annotated[Session, Depends(get_db)]
 
-# POST /signup
+
+# POST /user/signup
 @api_router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
-def signup(body: UserCreate):
+def signup(body: UserCreate, db: DB):
     """Register a new user account."""
-    # TODO: check for duplicate email in DB
-    # TODO: hash password and save user to DB
-    return SignupResponse(userId=1)
+    user = UserService.signup(db, body)
+    return SignupResponse(userId=user.id)
 
 
-# POST /login
+# POST /user/login
 @api_router.post("/login", response_model=LoginResponse)
-def login(body: LoginRequest):
+def login(body: LoginRequest, db: DB):
     """Authenticate and return a JWT access token."""
-    # TODO: verify email and password against DB
-    # TODO: generate and return real JWT token
-    return LoginResponse(token="placeholder-token", userId=1)
+    token, user_id = UserService.login(db, body.email, body.password)
+    return LoginResponse(token=token, userId=user_id)
 
 
 # GET /user/{id}
-@api_router.get("/user/{id}", response_model=User)
-def get_user(id: int):
+@api_router.get("/{id}", response_model=User)
+def get_user(id: int, db: DB):
     """Retrieve a user's public profile."""
-    # TODO: query DB for user by id, raise 404 if not found
-    return User(id=id, first_name="John", last_name="Doe", email="john@example.com")
+    return UserService.get_user(db, id)
 
 
 # PUT /user/{id}
-@api_router.put("/user/{id}", response_model=UserUpdateResponse)
-def update_user(id: int, body: UserUpdate):
+@api_router.put("/{id}", response_model=UserUpdateResponse)
+def update_user(id: int, body: UserUpdate, db: DB):
     """Update a user's first name, last name, and/or email."""
-    # TODO: query DB for user by id, raise 404 if not found
-    # TODO: check for email conflict, apply updates, save to DB
-    return UserUpdateResponse(
-        user=User(id=id, first_name="John", last_name="Doe", email="john@example.com")
-    )
+    user = UserService.update_user(db, id, body)
+    return UserUpdateResponse(user=User.model_validate(user))
 
 
 # DELETE /user/{id}
-@api_router.delete("/user/{id}", response_model=SuccessResponse)
-def delete_user(id: int):
+@api_router.delete("/{id}", response_model=SuccessResponse)
+def delete_user(id: int, db: DB):
     """Delete a user and all their associated data."""
-    # TODO: query DB for user by id, raise 404 if not found
-    # TODO: delete user from DB (cascade handles related records)
+    UserService.delete_user(db, id)
     return SuccessResponse()
