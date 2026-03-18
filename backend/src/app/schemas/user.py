@@ -56,6 +56,7 @@ class UserUpdate(BaseModel):
 
     first_name: str | None = Field(None, min_length=1, max_length=15)
     last_name: str | None = Field(None, min_length=1, max_length=15)
+    email: EmailStr | None = None
 
     @field_validator("first_name", "last_name")
     @classmethod
