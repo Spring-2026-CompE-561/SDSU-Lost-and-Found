@@ -1,45 +1,42 @@
 # backend/src/app/repository/conversation_repository.py
-from __future__ import annotations
-from typing import Optional, Sequence
+from sqlalchemy.orm import Session
+from app.models.conversation import Conversation
 
 
-# Later this will be a SQLAlchemy Session type:
-# from sqlalchemy.orm import Session
+class ConversationRepository:
 
+    @staticmethod
+    def get_by_id(db: Session, conversation_id: int) -> Conversation | None:
+        return db.query(Conversation).filter(Conversation.id == conversation_id).first()
 
-def get_by_id(db, conversation_id: int):
-    """
-    Return a conversation by its ID, or None if not found.
-    """
-    raise NotImplementedError
+    @staticmethod
+    def get_by_user_pair(db: Session, user_id1: int, user_id2: int) -> Conversation | None:
+        return db.query(Conversation).filter(
+            ((Conversation.user_id1 == user_id1) & (Conversation.user_id2 == user_id2)) |
+            ((Conversation.user_id1 == user_id2) & (Conversation.user_id2 == user_id1))
+        ).first()
 
+    @staticmethod
+    def list_for_user(db: Session, user_id: int, limit: int = 50, offset: int = 0):
+        return (
+            db.query(Conversation)
+            .filter(
+                (Conversation.user_id1 == user_id) | (Conversation.user_id2 == user_id)
+            )
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
 
-def get_by_user_pair(db, user_id1: int, user_id2: int):
-    """
-    Return the conversation for a pair of users if it exists, else None.
-    NOTE: caller should pass IDs in normalized order (min, max).
-    """
-    raise NotImplementedError
+    @staticmethod
+    def create(db: Session, user_id1: int, user_id2: int) -> Conversation:
+        convo = Conversation(user_id1=user_id1, user_id2=user_id2)
+        db.add(convo)
+        db.commit()
+        db.refresh(convo)
+        return convo
 
-
-def list_for_user(db, user_id: int, limit: int = 50, offset: int = 0):
-    """
-    Return conversations where user_id is a participant.
-    """
-    raise NotImplementedError
-
-
-def create(db, user_id1: int, user_id2: int):
-    """
-    Create and return a new conversation for a pair of users.
-    """
-    raise NotImplementedError
-
-
-def delete(db, conversation_id: int) -> bool:
-    """
-    Delete a conversation by ID.
-    Returns True if deleted, False if not found.
-    Messages should be deleted automatically via cascade at the DB/model level.
-    """
-    raise NotImplementedError
+    @staticmethod
+    def delete(db: Session, db_conversation: Conversation) -> None:
+        db.delete(db_conversation)
+        db.commit()

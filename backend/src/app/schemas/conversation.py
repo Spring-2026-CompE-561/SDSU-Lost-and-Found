@@ -1,13 +1,13 @@
 # backend/src/app/schemas/conversation.py
-from datetime import datetime
-from pydantic import BaseModel, Field
+#from datetime import datetime
+from pydantic import BaseModel
 
 
 
 # Input Schema
 #To create a new conversation 
 class ConversationCreate(BaseModel):
-    recipient_id: int = Field(..., ge=1)
+    recipient_id: int 
 
 # Response Schema
 class ConversationOut(BaseModel):
