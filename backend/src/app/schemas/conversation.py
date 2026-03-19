@@ -3,20 +3,27 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 
+
+# Input Schema
+#To create a new conversation 
 class ConversationCreate(BaseModel):
     recipient_id: int = Field(..., ge=1)
 
-
+# Response Schema
 class ConversationOut(BaseModel):
     id: int
     participant_ids: list[int]
-    created_at: datetime
+    #created_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 class ConversationListItem(BaseModel):
     id: int
+    partner_id: int
     last_message: str | None = None
-    partner_name: str | None = None
+
+    model_config = {"from_attributes": True}
 
 
 class SuccessResponse(BaseModel):
