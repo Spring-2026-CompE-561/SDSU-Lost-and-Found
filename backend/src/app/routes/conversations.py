@@ -10,7 +10,8 @@ from app.schemas.conversation import (
     ConversationOut,
     SuccessResponse,
 )
-from app.services.conversation_service import ConversationService
+import app.services.conversation as conversation_service
+
 
 api_router = APIRouter(prefix="/conversations", tags=["conversations"])
 
@@ -21,7 +22,7 @@ DB = Annotated[Session, Depends(get_db)]
 def create_conversation(body: ConversationCreate, db: DB):  # input schema
     """Create or find a conversation between two users."""
     current_user_id = 1
-    return ConversationService.get_or_create_conversation(db, body, current_user_id)
+    return conversation_service.get_or_create_conversation(db, body, current_user_id)
 
 
 # GET /conversations/
@@ -29,7 +30,7 @@ def create_conversation(body: ConversationCreate, db: DB):  # input schema
 def list_conversations(db: DB, limit: int = Query(50, ge=1), offset: int = Query(0, ge=0)):
     """List all active conversations for the logged-in user."""
     current_user_id = 1
-    return ConversationService.list_conversations(db, current_user_id, limit, offset)
+    return conversation_service.list_conversations(db, current_user_id, limit, offset)
 
 
 # DELETE /conversations/{conversation_id}
@@ -37,7 +38,7 @@ def list_conversations(db: DB, limit: int = Query(50, ge=1), offset: int = Query
 def delete_conversation(conversation_id: int, db: DB):
     """Delete a conversation and all its messages."""
     current_user_id = 1
-    ConversationService.delete_conversation(db, current_user_id, conversation_id)
+    conversation_service.delete_conversation(db, current_user_id, conversation_id)
     return SuccessResponse()
 
 

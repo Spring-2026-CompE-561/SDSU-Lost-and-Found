@@ -3,11 +3,13 @@ Conversation Service
 Business logic for conversations.
 """
 
+#Becuase I need to wait for Messages to work Lines 12, 71, 75 are commented 
+
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.repository.conversation_repository import ConversationRepository
-from app.repository.message_repository import MessageRepository
+#from app.repository.message_repository import MessageRepository
 from app.schemas.conversation import ConversationListItem, ConversationOut
 
 
@@ -66,11 +68,12 @@ def list_conversations(
     result = []
     for convo in convos:
         partner_id = convo.user_id2 if convo.user_id1 == current_user_id else convo.user_id1
-        last = MessageRepository.get_last_message(db, convo.id)
+        #last = MessageRepository.get_last_message(db, convo.id)                                Until Messages are working
         result.append(ConversationListItem(
             id=convo.id,
             partner_id=partner_id,
-            last_message=last.message_text if last else None,
+            #last_message=last.message_text if last else None,
+            last_message=None,                                                              #temporary until message backend works
             #created_at=convo.created_at,
         ))
     return result
