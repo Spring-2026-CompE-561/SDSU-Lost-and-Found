@@ -16,8 +16,7 @@ class conversation(Base):
     user2 = relationship("User", foreign_keys=[user_id2])
 
 
-
-                            #Messages name needs to match with tablename of message data model -  To make sure messages would get delete if a conversation is deleted 
+        #Messages name needs to match with tablename of message data model -  To make sure messages would get delete if a conversation is deleted 
     messages = relationship("messages", back_populates="conversation", cascade="all, delete")
 
 
