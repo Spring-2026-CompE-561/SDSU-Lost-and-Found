@@ -1,4 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
+from sqlalchemy.orm import Session
+from app.core.db import get_db
+
 from app.schemas.conversation import (
     ConversationCreate,
     ConversationOut,
@@ -10,7 +13,7 @@ from app.services import chat_service
 
 api_router = APIRouter(prefix="/conversations", tags=["conversations"])
 
-'''
+''' 
 NOTE: current_user_id = 1 is used as a placeholder name since right now
 we do not have the real auth flow connected in this file yet, so it's fake the logged-in user as user 1.
 '''
