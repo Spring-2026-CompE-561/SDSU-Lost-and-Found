@@ -10,12 +10,17 @@ class MessageCreate(BaseModel):
 class MessageOut(BaseModel):
     id: int
     sender_id: int
-    content: str
-    timestamp: datetime
+    message_text: str
+    is_read: bool
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
 
 
 class MessageListItem(BaseModel):
     id: int
     sender_id: int
-    text: str
-    timestamp: datetime
+    message_text: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
