@@ -1,8 +1,5 @@
-
-from fastapi import APIRouter, HTTPException, Query
-from sqlalchemy.orm import Session
-from app.core.db import get_db
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
@@ -18,35 +15,8 @@ import app.services.conversation as conversation_service
 
 api_router = APIRouter(prefix="/conversations", tags=["conversations"])
 
-''' 
-NOTE: current_user_id = 1 is used as a placeholder name since right now
-we do not have the real auth flow connected in this file yet, so it's fake the logged-in user as user 1.
-'''
-# create or find conversation between 2 users 
-@api_router.post("/")
-def create_conversation(payload: ConversationCreate) -> ConversationOut:
-    try:
-        return chat_service.get_or_create_conversation(
-            current_user_id=1,
-            recipient_id=payload.recipient_id,
-        )
-    except NotImplementedError:
-        raise HTTPException(status_code=501, detail="Not implemented yet")
-    
-@api_router.get("/")
-def list_conversations(
-    limit: int = Query(50, ge = 1),
-    offset: int = Query(0, ge= 0),
-) -> list[ConversationListItem]:
-    try: 
-        return chat_service.list_conversations(
-            current_user_id=1,
-            limit=limit,
-            offset=offset
-        )
-    except NotImplementedError:
-        raise HTTPException(status_code=501, detail="Not implemented yet")
 DB = Annotated[Session, Depends(get_db)]
+
 # POST /conversations/
 @api_router.post("/", response_model=ConversationOut)       # response schema 
 def create_conversation(body: ConversationCreate, db: DB):  # input schema
@@ -76,6 +46,7 @@ def delete_conversation(conversation_id: int, db: DB):
 
 
 #--------- Routes for Messages ----------#
+""""
 @api_router.get("/{conversation_id}/messages")
 def get_messages(
     conversation_id: int,
@@ -106,3 +77,5 @@ def send_message(
         )
     except NotImplementedError:
         raise HTTPException(status_code=501, detail="Not implemented yet")
+
+        """
