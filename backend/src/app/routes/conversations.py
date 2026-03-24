@@ -1,16 +1,12 @@
-<<<<<<< HEAD
+
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.core.db import get_db
-
-=======
 from typing import Annotated
-
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
->>>>>>> 83cfa304a33947050b9682f29ffa7fa13e706fce
 from app.schemas.conversation import (
     ConversationCreate,
     ConversationListItem,
@@ -22,7 +18,6 @@ import app.services.conversation as conversation_service
 
 api_router = APIRouter(prefix="/conversations", tags=["conversations"])
 
-<<<<<<< HEAD
 ''' 
 NOTE: current_user_id = 1 is used as a placeholder name since right now
 we do not have the real auth flow connected in this file yet, so it's fake the logged-in user as user 1.
@@ -51,10 +46,7 @@ def list_conversations(
         )
     except NotImplementedError:
         raise HTTPException(status_code=501, detail="Not implemented yet")
-=======
 DB = Annotated[Session, Depends(get_db)]
->>>>>>> 83cfa304a33947050b9682f29ffa7fa13e706fce
-
 # POST /conversations/
 @api_router.post("/", response_model=ConversationOut)       # response schema 
 def create_conversation(body: ConversationCreate, db: DB):  # input schema
@@ -84,7 +76,6 @@ def delete_conversation(conversation_id: int, db: DB):
 
 
 #--------- Routes for Messages ----------#
-""""
 @api_router.get("/{conversation_id}/messages")
 def get_messages(
     conversation_id: int,
@@ -115,5 +106,3 @@ def send_message(
         )
     except NotImplementedError:
         raise HTTPException(status_code=501, detail="Not implemented yet")
-
-        """
