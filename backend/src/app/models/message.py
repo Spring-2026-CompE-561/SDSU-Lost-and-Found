@@ -17,4 +17,4 @@ class Message(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
  
     conversation = relationship("Conversation", back_populates="messages")
-    sender = relationship("User", foreign_keys=[sender_id])
+    sender = relationship("User", back_populates= "message_sent", foreign_keys=[sender_id])

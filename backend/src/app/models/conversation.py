@@ -12,8 +12,8 @@ class Conversation(Base):
     user_id2 = Column(Integer, ForeignKey("users.id"), nullable=False)
     #created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
-    user1 = relationship("User", foreign_keys=[user_id1])
-    user2 = relationship("User", foreign_keys=[user_id2])
+    user1 = relationship("User", foreign_keys=[user_id1], back_populates="conversation_as_user1")
+    user2 = relationship("User", foreign_keys=[user_id2], back_populates="conversation_as_user2")
 
     messages = relationship("Message", back_populates="conversation", cascade="all, delete")
 
