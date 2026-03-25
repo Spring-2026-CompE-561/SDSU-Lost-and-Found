@@ -38,6 +38,11 @@ class User(Base):
     # tokens = relationship("UserToken", back_populates="user", cascade="all, delete-orphan")
 
     # Auth tokens (UserToken model) - cascade ensures a user's tokens are deleted with the user.
+    # tokens = relationship("UserToken", back_populates="user", cascade="all, delete-orphan")
+    #conversation_as_user1 = relationship("Conversation", foreign_keys="conversation.user_id1", back_populates="user1")
+    #conversation_as_user2 = relationship("Conversation", foreign_keys="conversation.user_id2", back_populates="user2")
+    #message_sent = relationship("Message", back_populates="sender", foreign_keys="Message.sender_id", cascade="all, delete-orphan")
+    
     # tokens = relationship("UserToken", back_populates="user", cascade="all, delete-orphan")   
         # Refresh tokens - cascade ensures a user's tokens are deleted with the user.
     refresh_tokens = relationship(
