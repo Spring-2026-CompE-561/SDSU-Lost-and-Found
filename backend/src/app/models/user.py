@@ -1,5 +1,6 @@
 # src/app/models/user.py
 from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 from app.core.db import Base
 
 class User(Base):
@@ -19,4 +20,10 @@ class User(Base):
     # messages = relationship("Message", back_populates="sender", cascade="all, delete-orphan")
 
     # Auth tokens (UserToken model) - cascade ensures a user's tokens are deleted with the user.
-    # tokens = relationship("UserToken", back_populates="user", cascade="all, delete-orphan")
+    # tokens = relationship("UserToken", back_populates="user", cascade="all, delete-orphan")   
+        # Refresh tokens - cascade ensures a user's tokens are deleted with the user.
+    refresh_tokens = relationship(
+        "RefreshToken",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )

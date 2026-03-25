@@ -1,13 +1,13 @@
-# app/routes/users.py
+# app/routes/user.py
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.db import get_db
+from app.schemas.token import TokenPairResponse
 from app.schemas.user import (
     LoginRequest,
-    LoginResponse,
     SignupResponse,
     SuccessResponse,
     User,
@@ -15,6 +15,7 @@ from app.schemas.user import (
     UserUpdate,
     UserUpdateResponse,
 )
+from app.services.token_service import TokenService
 from app.services.user import UserService
 
 api_router = APIRouter(prefix="/user", tags=["users"])
@@ -31,11 +32,15 @@ def signup(body: UserCreate, db: DB):
 
 
 # POST /user/login
-@api_router.post("/login", response_model=LoginResponse)
+@api_router.post("/login", response_model=TokenPairResponse)
 def login(body: LoginRequest, db: DB):
-    """Authenticate and return a JWT access token."""
-    token, user_id = UserService.login(db, body.email, body.password)
-    return LoginResponse(token=token, userId=user_id)
+    """
+    Authenticate with email and password.
+    Returns a short-lived access token (15 min) and a
+    long-lived refresh token (7 days).
+    """
+    _, user_id = UserService.login(db, body.email, body.password)
+    return TokenService.issue_token_pair(db, user_id)
 
 
 # GET /user/{id}
