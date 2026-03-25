@@ -81,22 +81,9 @@ class User(UserBase):
     model_config = {"from_attributes": True}
 
 
-class Token(BaseModel):
-    """Schema for authentication token response."""
-
-    access_token: str
-    token_type: str
-
 class SignupResponse(BaseModel):
     """Schema for signup response."""
 
-    userId: int
-
-
-class LoginResponse(BaseModel):
-    """Schema for login response."""
-
-    token: str
     userId: int
 
 
