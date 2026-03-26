@@ -13,40 +13,17 @@ class User(Base):
     password_hash = Column(String, nullable=False)
 
 # Relationships
- 
-    # RefreshToken model - ready, back_populates="refresh_tokens" is set on RefreshToken model.
+ # RefreshToken → back_populates="user" (already set on RefreshToken model)
     refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
- 
-    # Posts (Item model) - uncomment once teammate adds:
-    #   owner = relationship("User", back_populates="posts")
-    # posts = relationship("Item", back_populates="owner", cascade="all, delete-orphan")
- 
-    # Messages (Message model) - DO NOT uncomment yet, teammate has wrong class name "user" instead of "User"
-    # and is missing back_populates. Coordinate with teammate first.
-    # messages = relationship("Message", back_populates="sender", cascade="all, delete-orphan")
- 
-    # Conversations as user1 (Conversation model) - uncomment once teammate adds:
-    #user1 = relationship("User", foreign_keys=[user_id1], back_populates="conversations_as_user1")
-    # conversations_as_user1 = relationship("Conversation", foreign_keys="Conversation.user_id1", back_populates="user1", cascade="all, delete-orphan")
- 
-    # Conversations as user2 (Conversation model) - uncomment once teammate adds:
-    #user2 = relationship("User", foreign_keys=[user_id2], back_populates="conversations_as_user2")
-    # conversations_as_user2 = relationship("Conversation", foreign_keys="Conversation.user_id2", back_populates="user2", cascade="all, delete-orphan")
- 
-    # Auth tokens (UserToken model) - uncomment once teammate adds:
-    #   user = relationship("User", back_populates="tokens")
-    # tokens = relationship("UserToken", back_populates="user", cascade="all, delete-orphan")
 
-    # Auth tokens (UserToken model) - cascade ensures a user's tokens are deleted with the user.
-    # tokens = relationship("UserToken", back_populates="user", cascade="all, delete-orphan")
-    #conversation_as_user1 = relationship("Conversation", foreign_keys="conversation.user_id1", back_populates="user1")
-    #conversation_as_user2 = relationship("Conversation", foreign_keys="conversation.user_id2", back_populates="user2")
-    #message_sent = relationship("Message", back_populates="sender", foreign_keys="Message.sender_id", cascade="all, delete-orphan")
-    
-    # tokens = relationship("UserToken", back_populates="user", cascade="all, delete-orphan")   
-        # Refresh tokens - cascade ensures a user's tokens are deleted with the user.
-    refresh_tokens = relationship(
-        "RefreshToken",
-        back_populates="user",
-        cascade="all, delete-orphan",
-    )
+    # Item → back_populates="owner" (Item model has: owner = relationship("User", back_populates="items"))
+    items = relationship("Item", back_populates="owner", cascade="all, delete-orphan")
+
+    # Message → back_populates="sender" (Message model has: sender = relationship("User", back_populates="message_sent", foreign_keys=[sender_id]))
+    message_sent = relationship("Message", back_populates="sender", foreign_keys="[Message.sender_id]", cascade="all, delete-orphan")
+
+    # Conversation as user1 → back_populates="user1" (Conversation model has: user1 = relationship("User", foreign_keys=[user_id1], back_populates="conversation_as_user1"))
+    conversation_as_user1 = relationship("Conversation", foreign_keys="[Conversation.user_id1]", back_populates="user1", cascade="all, delete-orphan")
+
+    # Conversation as user2 → back_populates="user2" (Conversation model has: user2 = relationship("User", foreign_keys=[user_id2], back_populates="conversation_as_user2"))
+    conversation_as_user2 = relationship("Conversation", foreign_keys="[Conversation.user_id2]", back_populates="user2", cascade="all, delete-orphan")
