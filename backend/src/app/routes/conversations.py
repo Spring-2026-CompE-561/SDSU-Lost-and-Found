@@ -25,7 +25,7 @@ DB = Annotated[Session, Depends(get_db)]
 def create_conversation(body: ConversationCreate, db: DB):  # input schema
     """Create or find a conversation between two users."""
     current_user_id = 1
-    return conversation_service.get_or_create_conversation(db, current_user_id, body.current_user_id)
+    return conversation_service.get_or_create_conversation(db, current_user_id, body.recipient_id)
 
 
 # GET /conversations/
