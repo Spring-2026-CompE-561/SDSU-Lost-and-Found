@@ -1,6 +1,18 @@
-"""
-NOTE: Current_user_id = 1 is still hardcoded everywhere
-"""
+# ============================================================
+# Notes:
+# 
+# current_user_id is hardcoded to 1 for testing purposes.
+#
+#
+# 
+#
+#
+#
+#
+#
+#
+#
+# ============================================================
 from typing import Annotated
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -20,10 +32,15 @@ api_router = APIRouter(prefix="/conversations", tags=["conversations"])
 
 DB = Annotated[Session, Depends(get_db)]
 
+
+
+
+
+
 # POST /conversations/
 @api_router.post("/", response_model=ConversationOut)       # response schema 
 def create_conversation(body: ConversationCreate, db: DB):  # input schema
-    """Create or find a conversation between two users."""
+ #   Create or find a conversation between two users.
     current_user_id = 1
     return conversation_service.get_or_create_conversation(db, current_user_id, body.recipient_id)
 
@@ -31,7 +48,7 @@ def create_conversation(body: ConversationCreate, db: DB):  # input schema
 # GET /conversations/
 @api_router.get("/", response_model=list[ConversationListItem])
 def list_conversations(db: DB, limit: int = Query(50, ge=1), offset: int = Query(0, ge=0)):
-    """List all active conversations for the logged-in user."""
+ #  List all active conversations for the logged-in user.
     current_user_id = 1
     return conversation_service.list_conversations(db, current_user_id, limit, offset)
 
@@ -39,7 +56,7 @@ def list_conversations(db: DB, limit: int = Query(50, ge=1), offset: int = Query
 # DELETE /conversations/{conversation_id}
 @api_router.delete("/{conversation_id}", response_model=SuccessResponse)
 def delete_conversation(conversation_id: int, db: DB):
-    """Delete a conversation and all its messages."""
+#    Delete a conversation and all its messages.
     current_user_id = 1
     conversation_service.delete_conversation(db, current_user_id, conversation_id)
     return SuccessResponse()
@@ -53,7 +70,7 @@ def get_messages(
     limit: int = Query(50, ge=1),
     offset: int = Query(0, ge=0),
 ):
-    """Retrieve message history for a conversation."""
+ #   Retrieve message history for a conversation.
     current_user_id = 1
     return chat_service.get_messages(db, current_user_id, conversation_id, limit, offset)
  
@@ -65,6 +82,6 @@ def send_message(
     body: MessageCreate,
     db: DB,
 ):
-    """Send a new message in a conversation."""
+#    Send a new message in a conversation.
     current_user_id = 1
     return chat_service.send_message(db, current_user_id, conversation_id, body.content)

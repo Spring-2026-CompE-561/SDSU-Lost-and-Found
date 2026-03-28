@@ -1,0 +1,6 @@
+$kind: http-request
+name: Get Item
+description: Retrieve a specific item post.
+method: GET
+url: '{{baseUrl}}/api/v1/home/{{itemId}}'
+order: 2000

@@ -1,0 +1,17 @@
+$kind: http-request
+name: Update User
+description: "Update a user's first name, last name, and/or email."
+method: PUT
+url: '{{baseUrl}}/api/v1/user/{{userId}}'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "first_name": "Jane",
+      "last_name": "Doe",
+      "email": "newemail@example.com"
+    }

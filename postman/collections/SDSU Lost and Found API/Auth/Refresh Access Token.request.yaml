@@ -1,0 +1,15 @@
+$kind: http-request
+name: Refresh Access Token
+description: Submit a valid refresh token to receive a new access token. The refresh token remains active until its 7-day expiry.
+method: POST
+url: '{{baseUrl}}/api/v1/token/refresh'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "refresh_token": "{{refreshToken}}"
+    }
