@@ -1,6 +1,14 @@
 # Use this workspace to collaborate
 workspace:
   id: 69e041da-6a04-45f6-873d-9ff27842ca3e
+
 localResources:
   specs:
     - ..\docs\swagger.yaml
+
+# Each entry here maps a local resource to one or more corresponding objects in Postman Cloud
+cloudResources:
+  specs:
+    ..\docs\swagger.yaml: c3ab94e3-6565-44b7-9355-cb5e45c39bd8
+  collections:
+    ..\postman\collections\SDSU Lost and Found API: 53528360-43bb4eb2-d452-4743-86f1-ef2865b3452d

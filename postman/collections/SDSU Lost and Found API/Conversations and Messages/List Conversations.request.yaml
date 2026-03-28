@@ -1,0 +1,11 @@
+$kind: http-request
+name: List Conversations
+description: List all active conversations for the logged-in user.
+method: GET
+url: '{{baseUrl}}/api/v1/conversations/'
+order: 2000
+queryParams:
+  - key: limit
+    value: '50'
+  - key: offset
+    value: '0'

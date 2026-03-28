@@ -1,0 +1,6 @@
+$kind: http-request
+name: Delete User
+description: Delete a user and all their associated data.
+method: DELETE
+url: '{{baseUrl}}/api/v1/user/{{userId}}'
+order: 3000
