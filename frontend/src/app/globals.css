@@ -9,7 +9,7 @@
   --color-foreground: var(--foreground);
 
   --font-sans: var(--font-body);
-  --font-mono: var(--font-geist-body);
+  --font-mono: var(--font-body);
   --font-heading: var(--font-display);
 
   --color-sidebar-ring: var(--sidebar-ring);
@@ -128,5 +128,6 @@
   }
   html {
     @apply font-sans;
+    scrollbar-gutter: stable;
   }
 }

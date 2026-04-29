@@ -11,7 +11,7 @@ export default function Navbar() {
   return (
     <>
       <nav className="w-full bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div className="w-full px-6 md:px-20 py-3 flex items-center justify-between">
           
           {/* Left — SDSU Lost & Found branding */}
           <Link href="/" className="flex items-center">
