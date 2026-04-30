@@ -7,14 +7,16 @@ const SAMPLE_POSTS = [
   {
     username: "SDSU_Aztec",
     status: "Lost" as const,
-    description: "Lost my red SDSU backpack near the library. Has a laptop inside.",
+    description:
+      "Lost my red SDSU backpack near the library. Has a laptop inside.",
     location: "Love Library",
     date: "Apr 27",
   },
   {
     username: "Sarah L.",
     status: "Found" as const,
-    description: "Found a set of keys near the student union. Has an Aztec lanyard.",
+    description:
+      "Found a set of keys near the student union. Has an Aztec lanyard.",
     location: "Student Union",
     date: "Apr 26",
   },
@@ -47,7 +49,6 @@ export default function Home() {
 
       {/* Main 3-column layout */}
       <div className="max-w-5xl mx-auto px-4 py-4 grid grid-cols-[200px_1fr_200px] gap-6">
-
         {/* Left — Filters */}
         <aside className="bg-white rounded-lg border border-gray-200 p-4 h-fit shadow-sm">
           <h2 className="font-semibold text-gray-700 mb-3 text-sm uppercase tracking-wide">
@@ -62,7 +63,7 @@ export default function Home() {
                     {filter}
                   </label>
                 </li>
-              )
+              ),
             )}
           </ul>
         </aside>
@@ -82,11 +83,19 @@ export default function Home() {
             </h2>
             <ul className="space-y-2">
               {ONLINE_USERS.map((user, i) => (
-                <li key={i} className="flex items-center gap-2 text-sm text-gray-700">
+                <li
+                  key={i}
+                  className="flex items-center gap-2 text-sm text-gray-700"
+                >
                   <span
                     className="w-2.5 h-2.5 rounded-full"
                     style={{
-                      backgroundColor: ["#C8102E", "#22c55e", "#3b82f6", "#a855f7"][i % 4],
+                      backgroundColor: [
+                        "#C8102E",
+                        "#22c55e",
+                        "#3b82f6",
+                        "#a855f7",
+                      ][i % 4],
                     }}
                   />
                   {user}
