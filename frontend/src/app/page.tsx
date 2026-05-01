@@ -7,9 +7,8 @@ import PostCard from "@/components/post-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Inbox, PlusCircle, Search } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
 type ItemPost = {
   id: number;
@@ -31,27 +30,19 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    async function fetchPosts() {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/home/`);
-
-        if (!response.ok) {
-          setErrorMessage("Could not load posts.");
-          setIsLoading(false);
-          return;
-        }
-
-        const data = (await response.json()) as ItemPost[];
-        setPosts(data);
-      } catch {
-        setErrorMessage("Could not connect to the backend server.");
-      } finally {
-        setIsLoading(false);
-      }
+  async function fetchPosts() {
+    try {
+      const data = await apiFetch<ItemPost[]>("/api/v1/home/");
+      setPosts(data);
+    } catch {
+      setErrorMessage("Could not connect to the backend server.");
+    } finally {
+      setIsLoading(false);
     }
+  }
 
-    fetchPosts();
-  }, []);
+  fetchPosts();
+}, []);
 
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {

@@ -4,35 +4,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-
-type FastApiErrorDetail =
-  | string
-  | {
-      msg?: string;
-      loc?: string[];
-    }[];
-
-function getApiErrorMessage(detail: FastApiErrorDetail | undefined): string {
-  if (!detail) {
-    return "Something went wrong. Please try again.";
-  }
-
-  if (typeof detail === "string") {
-    return detail;
-  }
-
-  if (Array.isArray(detail) && detail.length > 0) {
-    return detail
-      .map((error) => error.msg)
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  return "Something went wrong. Please try again.";
-}
+import { apiFetch, getApiErrorMessage } from "@/lib/api";
 
 export default function CreatePostPage() {
   const router = useRouter();
@@ -42,11 +14,11 @@ export default function CreatePostPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-  const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
-  if (!token) {
-    router.replace("/login?message=signin-required&redirect=/create-post");
-  }
+    if(!token) {
+        router.replace("/login?message=signin-required&redirect=/create-post");
+    }
 }, [router]);
 
   async function handleCreatePost(event: FormEvent<HTMLFormElement>) {
@@ -79,40 +51,26 @@ export default function CreatePostPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/home/`, {
+      await apiFetch("/api/v1/home/", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
-          title,
-          description,
-          location,
-          report_type: reportType,
-          image_url: imageUrl || null,
-          given_back: false,
+            title,
+            description,
+            location,
+            report_type: reportType,
+            image_url: imageUrl || null,
+            given_back: false,
         }),
-      });
+        });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        setIsError(true);
-        setMessage(getApiErrorMessage(data.detail));
-        setIsSubmitting(false);
-        return;
-      }
-
-      setIsError(false);
-      setMessage("Post created successfully. Redirecting to homepage...");
-
-      router.push("/");
-    } catch {
-      setIsError(true);
-      setMessage("Could not connect to the backend server.");
+    setIsError(false);
+    setMessage("Post created successfully. Redirecting to homepage...");
+    router.push("/");
+    } catch (error) {
+    setIsError(true);
+    setMessage(getApiErrorMessage(error));
     } finally {
-      setIsSubmitting(false);
+    setIsSubmitting(false);
     }
   }
 
