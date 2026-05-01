@@ -3,15 +3,69 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+
+function getStoredUserName() {
+  if (typeof window === "undefined") {
+    return "";
+  }
+
+  const token = localStorage.getItem("token");
+  const firstName = localStorage.getItem("firstName");
+  const lastName = localStorage.getItem("lastName");
+  const email = localStorage.getItem("email");
+
+  if (!token) {
+    return "";
+  }
+
+  const fullName = `${firstName || ""} ${lastName || ""}`.trim();
+
+  if (fullName) {
+    return fullName;
+  }
+
+  if (email) {
+    return email;
+  }
+
+  return "Signed in";
+}
 
 export default function Navbar() {
+  const router = useRouter();
+
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userName, setUserName] = useState("");
+
+  const isSignedIn = userName.length > 0;
+  
+  function openMenu() {
+  setUserName(getStoredUserName());
+  setMenuOpen(true);
+}
+  function closeMenu() {
+    setMenuOpen(false);
+  }
+
+  function handleSignOut() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("userId");
+    localStorage.removeItem("firstName");
+    localStorage.removeItem("lastName");
+    localStorage.removeItem("email");
+
+    setUserName("");
+    setMenuOpen(false);
+
+    router.push("/");
+  }
 
   return (
     <>
       <nav className="w-full bg-white border-b border-gray-200 shadow-sm">
-        <div className="w-full px-6 md:px-20 py-3 flex items-center justify-between">
+        <div className="w-full px-6 py-3 md:px-20 flex items-center justify-between">
           {/* Left — SDSU Lost & Found branding */}
           <Link href="/" className="flex items-center">
             <Image
@@ -26,17 +80,17 @@ export default function Navbar() {
 
           {/* Right — SDSU-style menu button */}
           <button
-            onClick={() => setMenuOpen(true)}
-            className="flex items-center gap-3 text-gray-900 font-semibold hover:text-[#C8102E] transition-colors"
+            onClick={openMenu}
+            className="flex items-center gap-3 font-heading font-semibold text-gray-900 transition-colors hover:text-[#C8102E]"
             aria-label="Open navigation menu"
           >
             <span className="hidden sm:inline">Menu</span>
 
             {/* Three dashes icon */}
             <span className="flex flex-col gap-1">
-              <span className="w-7 h-0.5 bg-current rounded" />
-              <span className="w-7 h-0.5 bg-current rounded" />
-              <span className="w-7 h-0.5 bg-current rounded" />
+              <span className="h-0.5 w-7 rounded bg-current" />
+              <span className="h-0.5 w-7 rounded bg-current" />
+              <span className="h-0.5 w-7 rounded bg-current" />
             </span>
           </button>
         </div>
@@ -45,26 +99,34 @@ export default function Navbar() {
       {/* Dark overlay */}
       {menuOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40"
-          onClick={() => setMenuOpen(false)}
+          className="fixed inset-0 z-40 bg-black/60"
+          onClick={closeMenu}
         />
       )}
 
       {/* Side menu */}
       <aside
-        className={`fixed top-0 right-0 h-full w-full sm:w-[420px] bg-[#971B2F] text-white z-50 transform transition-transform duration-300 ease-in-out ${
+        className={`fixed right-0 top-0 z-50 h-full w-full transform bg-[#971B2F] text-white transition-transform duration-300 ease-in-out sm:w-[420px] ${
           menuOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Menu header */}
-        <div className="flex items-center justify-between px-8 py-6 border-b border-white/20">
-          <h2 className="font-heading text-xl font-bold tracking-tight">
-            SDSU Lost & Found
-          </h2>
+        <div className="flex items-start justify-between border-b border-white/20 px-8 pb-8 pt-10">
+          <div>
+            <h2 className="font-heading text-2xl font-bold tracking-tight">
+              SDSU Lost & Found
+            </h2>
+
+            {isSignedIn && (
+              <p className="mt-2 font-heading text-base font-semibold text-white/85">
+                {userName}
+              </p>
+            )}
+          </div>
 
           <button
-            onClick={() => setMenuOpen(false)}
-            className="text-4xl leading-none hover:opacity-80"
+            onClick={closeMenu}
+            className="text-4xl leading-none transition hover:opacity-80"
             aria-label="Close navigation menu"
           >
             ×
@@ -72,37 +134,51 @@ export default function Navbar() {
         </div>
 
         {/* Top quick actions */}
-        <div className="font-heading bg-white text-[#971B2F] px-8 py-5 flex gap-4 justify-between font-bold">
-          {" "}
-          <Link
-            href="/login"
-            onClick={() => setMenuOpen(false)}
-            className="hover:underline"
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/create-account"
-            onClick={() => setMenuOpen(false)}
-            className="hover:underline"
-          >
-            Create Account
-          </Link>
+        <div className="font-heading flex justify-between gap-4 bg-white px-8 py-5 font-bold text-[#971B2F]">
+          {isSignedIn ? (
+            <>
+              <Link
+                href="/account"
+                onClick={closeMenu}
+                className="hover:underline"
+              >
+                My Account
+              </Link>
+
+              <button onClick={handleSignOut} className="hover:underline">
+                Sign Out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                onClick={closeMenu}
+                className="hover:underline"
+              >
+                Sign In
+              </Link>
+
+              <Link
+                href="/create-account"
+                onClick={closeMenu}
+                className="hover:underline"
+              >
+                Create Account
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Main menu links */}
-        <div className="font-heading px-10 py-10 flex flex-col gap-8 text-2xl font-bold tracking-tight">
-          <Link
-            href="/"
-            onClick={() => setMenuOpen(false)}
-            className="hover:opacity-80"
-          >
+        <div className="font-heading flex flex-col gap-8 px-10 py-10 text-2xl font-bold tracking-tight">
+          <Link href="/" onClick={closeMenu} className="hover:opacity-80">
             Home
           </Link>
 
           <Link
             href="/create-post"
-            onClick={() => setMenuOpen(false)}
+            onClick={closeMenu}
             className="hover:opacity-80"
           >
             Create Lost/Found Post
@@ -110,31 +186,10 @@ export default function Navbar() {
 
           <Link
             href="/about"
-            onClick={() => setMenuOpen(false)}
+            onClick={closeMenu}
             className="hover:opacity-80"
           >
             About SDSU Lost & Found
-          </Link>
-        </div>
-
-        {/* Bottom buttons */}
-        <div className="absolute bottom-8 left-8 right-8 flex flex-col gap-3">
-          <Link href="/create-post" onClick={() => setMenuOpen(false)}>
-            <Button
-              variant="outline"
-              className="w-full border-white text-white hover:bg-white hover:text-[#971B2F] font-heading font-bold"
-            >
-              Sign In
-            </Button>
-          </Link>
-
-          <Link href="/login" onClick={() => setMenuOpen(false)}>
-            <Button
-              variant="outline"
-              className="w-full border-white text-white hover:bg-white hover:text-[#971B2F] font-bold"
-            >
-              Sign In
-            </Button>
           </Link>
         </div>
       </aside>
