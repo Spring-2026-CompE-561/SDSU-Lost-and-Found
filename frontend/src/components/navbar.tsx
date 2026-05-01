@@ -65,14 +65,14 @@ export default function Navbar() {
   return (
     <>
       <nav className="w-full bg-white border-b border-gray-200 shadow-sm">
-        <div className="w-full px-6 py-3 md:px-20 flex items-center justify-between">
+        <div className="w-full px-6 py-3 md:px-10 flex items-center justify-between">
           {/* Left — SDSU Lost & Found branding */}
           <Link href="/" className="flex items-center">
             <Image
               src="/logo.png"
               alt="SDSU Lost & Found Logo"
-              width={260}
-              height={52}
+              width={300}
+              height={64}
               loading="eager"
               style={{ height: "auto" }}
             />
