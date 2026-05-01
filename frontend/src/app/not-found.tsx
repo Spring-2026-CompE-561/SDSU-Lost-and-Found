@@ -16,7 +16,7 @@ export default function NotFound() {
           <div className="mt-6 h-[2px] w-28 bg-[#C8102E]" />
 
           <p className="mt-10 text-2xl md:text-3xl text-gray-800">
-            We're sorry, that page doesn't exist.
+            {"We're sorry, that page doesn't exist."}
           </p>
         </div>
       </section>

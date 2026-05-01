@@ -12,7 +12,6 @@ export default function Navbar() {
     <>
       <nav className="w-full bg-white border-b border-gray-200 shadow-sm">
         <div className="w-full px-6 md:px-20 py-3 flex items-center justify-between">
-          
           {/* Left — SDSU Lost & Found branding */}
           <Link href="/" className="flex items-center">
             <Image
@@ -73,14 +72,15 @@ export default function Navbar() {
         </div>
 
         {/* Top quick actions */}
-        <div className="font-heading bg-white text-[#971B2F] px-8 py-5 flex gap-4 justify-between font-bold">          <Link
+        <div className="font-heading bg-white text-[#971B2F] px-8 py-5 flex gap-4 justify-between font-bold">
+          {" "}
+          <Link
             href="/login"
             onClick={() => setMenuOpen(false)}
             className="hover:underline"
           >
             Sign In
           </Link>
-
           <Link
             href="/create-account"
             onClick={() => setMenuOpen(false)}
