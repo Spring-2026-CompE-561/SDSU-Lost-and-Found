@@ -36,6 +36,7 @@ class ItemRepository:
         title: str,
         description: str,
         location: str,
+        report_type: str,
         image_url: str | None = None,
         given_back: bool = False,
     ) -> Item:
@@ -44,6 +45,7 @@ class ItemRepository:
             title=title,
             description=description,
             location=location,
+            report_type=report_type,
             image_url=image_url,
             given_back=given_back,
         )
@@ -66,6 +68,7 @@ class ItemRepository:
         title: str | None = None,
         description: str | None = None,
         location: str | None = None,
+        report_type: str | None = None,
         image_url: str | None = None,
         given_back: bool | None = None,
     ) -> Item:
@@ -75,6 +78,8 @@ class ItemRepository:
             db_item.description = description
         if location is not None:
             db_item.location = location
+        if report_type is not None:
+            db_item.report_type = report_type
         if image_url is not None:
             db_item.image_url = image_url
         if given_back is not None:

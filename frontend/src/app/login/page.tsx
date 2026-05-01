@@ -1,7 +1,7 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
@@ -48,11 +48,18 @@ function getApiErrorMessage(detail: FastApiErrorDetail | undefined): string {
   return "Something went wrong. Please try again.";
 }
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
+  const redirectTo = searchParams.get("redirect") || "/";
+  const initialMessage =
+    searchParams.get("message") === "signin-required"
+      ? "Please sign in before creating a lost or found post."
+      : "";
+
+  const [message, setMessage] = useState(initialMessage);
+  const [isError, setIsError] = useState(Boolean(initialMessage));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -103,7 +110,7 @@ export default function LoginPage() {
 
       try {
         const userResponse = await fetch(
-          `${API_BASE_URL}/api/v1/user/${typedLoginData.userId}`
+          `${API_BASE_URL}/api/v1/user/${typedLoginData.userId}`,
         );
 
         if (userResponse.ok) {
@@ -120,7 +127,7 @@ export default function LoginPage() {
       setIsError(false);
       setMessage("Signed in successfully. Redirecting...");
 
-      router.push("/");
+      router.push(redirectTo);
     } catch {
       setIsError(true);
       setMessage("Could not connect to the backend server.");
@@ -252,5 +259,13 @@ export default function LoginPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }

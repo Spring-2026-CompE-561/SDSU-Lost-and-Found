@@ -11,11 +11,13 @@ def list_items(db: Session, limit: int, offset: int):
 
 def get_item_by_id(db: Session, item_id: int):
     item = ItemRepository.get_by_id(db, item_id)
+
     if item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Item not found",
         )
+
     return item
 
 
@@ -26,6 +28,7 @@ def create_item(db: Session, body: ItemCreate, current_user_id: int):
         title=body.title,
         description=body.description,
         location=body.location,
+        report_type=body.report_type,
         image_url=body.image_url,
         given_back=body.given_back,
     )
@@ -38,6 +41,7 @@ def update_item_status(
     body: ItemStatusUpdate,
 ):
     item = ItemRepository.get_by_id(db, item_id)
+
     if item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -55,6 +59,7 @@ def update_item_status(
 
 def delete_item(db: Session, current_user_id: int, item_id: int):
     item = ItemRepository.get_by_id(db, item_id)
+
     if item is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
