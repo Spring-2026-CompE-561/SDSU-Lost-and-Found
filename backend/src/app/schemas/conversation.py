@@ -21,6 +21,7 @@ class ConversationOut(BaseModel):
 class ConversationListItem(BaseModel):
     id: int
     partner_id: int
+    partner_name: str
     last_message: str | None = None
 
     model_config = {"from_attributes": True}

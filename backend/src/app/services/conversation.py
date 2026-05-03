@@ -9,9 +9,9 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.repository.conversation_repository import ConversationRepository
-#from app.repository.message_repository import MessageRepository
+from app.repository.message_repository import MessageRepository
+from app.repository.user import UserRepository
 from app.schemas.conversation import ConversationListItem, ConversationOut
-
 
 def get_or_create_conversation(
     db: Session,
@@ -66,16 +66,26 @@ def list_conversations(
     """
     convos = ConversationRepository.list_for_user(db, current_user_id, limit, offset)
     result = []
+
     for convo in convos:
         partner_id = convo.user_id2 if convo.user_id1 == current_user_id else convo.user_id1
-        #last = MessageRepository.get_last_message(db, convo.id)                                Until Messages are working
-        result.append(ConversationListItem(
-            id=convo.id,
-            partner_id=partner_id,
-            #last_message=last.message_text if last else None,
-            last_message=None,                                                              #temporary until message backend works
-            #created_at=convo.created_at,
-        ))
+        partner = UserRepository.get_by_id(db, partner_id)
+        last = MessageRepository.get_last_message_for_conversation(db, convo.id)
+
+        if partner:
+            partner_name = f"{partner.first_name} {partner.last_name}".strip()
+        else:
+            partner_name = "Unknown User"
+
+        result.append(
+            ConversationListItem(
+                id=convo.id,
+                partner_id=partner_id,
+                partner_name=partner_name,
+                last_message=last.message_text if last else None,
+            )
+        )
+
     return result
 
 
