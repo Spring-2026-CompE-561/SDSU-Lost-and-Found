@@ -5,35 +5,17 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
+import { apiFetch, getApiErrorMessage } from "@/lib/api";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+type SignupResponse = {
+  userId: number;
+};
 
-type ApiErrorDetail =
-  | string
-  | {
-      msg?: string;
-      loc?: string[];
-    }[];
-
-function getApiErrorMessage(detail: ApiErrorDetail | undefined): string {
-  if (!detail) {
-    return "Something went wrong. Please try again.";
-  }
-
-  if (typeof detail === "string") {
-    return detail;
-  }
-
-  if (Array.isArray(detail) && detail.length > 0) {
-    return detail
-      .map((error) => error.msg)
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  return "Something went wrong. Please try again.";
-}
+type LoginResponse = {
+  token: string;
+  refresh_token: string;
+  userId: number;
+};
 
 export default function CreateAccountPage() {
   const router = useRouter();
@@ -114,71 +96,44 @@ export default function CreateAccountPage() {
     }
 
     try {
-      const signupResponse = await fetch(`${API_BASE_URL}/api/v1/user/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          first_name: firstName,
-          last_name: lastName,
-          email,
-          password,
-        }),
-      });
+      await apiFetch<SignupResponse>("/api/v1/user/signup", {
+      method: "POST",
+      body: JSON.stringify({
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        password,
+      }),
+    });
 
-      const signupData = await signupResponse.json();
+    const loginData = await apiFetch<LoginResponse>("/api/v1/user/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
 
-      if (!signupResponse.ok) {
-        setIsError(true);
-        setMessage(getApiErrorMessage(signupData.detail));
-        setIsSubmitting(false);
-        return;
-      }
+    localStorage.setItem("token", loginData.token);
+    localStorage.setItem("refresh_token", loginData.refresh_token);
+    localStorage.setItem("userId", String(loginData.userId));
 
-      const loginResponse = await fetch(`${API_BASE_URL}/api/v1/user/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+    // Save these so the navbar can show the user's name
+    localStorage.setItem("firstName", firstName);
+    localStorage.setItem("lastName", lastName);
+    localStorage.setItem("email", email);
 
-      const loginData = await loginResponse.json();
+    setIsError(false);
+    setMessage("Account created successfully. Redirecting to homepage.");
 
-      if (!loginResponse.ok) {
-        setIsError(false);
-        setMessage(
-          "Account created successfully. Please sign in to continue."
-        );
-
-        setTimeout(() => {
-          router.push("/login");
-        }, 1000);
-
-        return;
-      }
-
-      localStorage.setItem("token", loginData.token);
-      localStorage.setItem("refresh_token", loginData.refresh_token);
-      localStorage.setItem("userId", String(loginData.userId));
-
-      setIsError(false);
-      setMessage("Account created successfully. Redirecting to homepage.");
-
-      setTimeout(() => {
-        router.push("/");
-      }, 1000);
-    } catch {
-      setIsError(true);
-      setMessage("Could not connect to the backend server.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    router.push("/");
+  } catch (error) {
+    setIsError(true);
+    setMessage(getApiErrorMessage(error));
+  } finally {
+    setIsSubmitting(false);
   }
+}
 
   return (
     <main className="min-h-screen bg-white text-black">

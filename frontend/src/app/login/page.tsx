@@ -1,20 +1,11 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { useRouter } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
-
-type FastApiErrorDetail =
-  | string
-  | {
-      msg?: string;
-      loc?: string[];
-    }[];
+import { apiFetch, getApiErrorMessage } from "@/lib/api";
 
 type LoginResponse = {
   token: string;
@@ -29,30 +20,18 @@ type UserResponse = {
   email: string;
 };
 
-function getApiErrorMessage(detail: FastApiErrorDetail | undefined): string {
-  if (!detail) {
-    return "Something went wrong. Please try again.";
-  }
-
-  if (typeof detail === "string") {
-    return detail;
-  }
-
-  if (Array.isArray(detail) && detail.length > 0) {
-    return detail
-      .map((error) => error.msg)
-      .filter(Boolean)
-      .join(" ");
-  }
-
-  return "Something went wrong. Please try again.";
-}
-
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [message, setMessage] = useState("");
-  const [isError, setIsError] = useState(false);
+  const redirectTo = searchParams.get("redirect") || "/";
+  const initialMessage =
+    searchParams.get("message") === "signin-required"
+      ? "Please sign in before creating a lost or found post."
+      : "";
+
+  const [message, setMessage] = useState(initialMessage);
+  const [isError, setIsError] = useState(Boolean(initialMessage));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
@@ -75,59 +54,41 @@ export default function LoginPage() {
     }
 
     try {
-      const loginResponse = await fetch(`${API_BASE_URL}/api/v1/user/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
+    const typedLoginData = await apiFetch<LoginResponse>("/api/v1/user/login", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password,
+      }),
+    });
 
-      const loginData = await loginResponse.json();
+    localStorage.setItem("token", typedLoginData.token);
+    localStorage.setItem("refresh_token", typedLoginData.refresh_token);
+    localStorage.setItem("userId", String(typedLoginData.userId));
 
-      if (!loginResponse.ok) {
-        setIsError(true);
-        setMessage(getApiErrorMessage(loginData.detail));
-        setIsSubmitting(false);
-        return;
-      }
+    try {
+      const userData = await apiFetch<UserResponse>(
+        `/api/v1/user/${typedLoginData.userId}`,
+      );
 
-      const typedLoginData = loginData as LoginResponse;
-
-      localStorage.setItem("token", typedLoginData.token);
-      localStorage.setItem("refresh_token", typedLoginData.refresh_token);
-      localStorage.setItem("userId", String(typedLoginData.userId));
-
-      try {
-        const userResponse = await fetch(
-          `${API_BASE_URL}/api/v1/user/${typedLoginData.userId}`
-        );
-
-        if (userResponse.ok) {
-          const userData = (await userResponse.json()) as UserResponse;
-
-          localStorage.setItem("firstName", userData.first_name);
-          localStorage.setItem("lastName", userData.last_name);
-          localStorage.setItem("email", userData.email);
-        }
-      } catch {
-        // Login still succeeded even if the profile request fails.
-      }
-
-      setIsError(false);
-      setMessage("Signed in successfully. Redirecting...");
-
-      router.push("/");
+      localStorage.setItem("firstName", userData.first_name);
+      localStorage.setItem("lastName", userData.last_name);
+      localStorage.setItem("email", userData.email);
     } catch {
-      setIsError(true);
-      setMessage("Could not connect to the backend server.");
-    } finally {
-      setIsSubmitting(false);
+      // Login still succeeded even if the profile request fails.
     }
-  }
+
+    setIsError(false);
+    setMessage("Signed in successfully. Redirecting...");
+
+    router.push(redirectTo);
+  } catch (error) {
+    setIsError(true);
+    setMessage(getApiErrorMessage(error));
+  } finally {
+    setIsSubmitting(false);
+  } 
+}
 
   return (
     <main className="min-h-screen bg-white text-black">
@@ -252,5 +213,13 @@ export default function LoginPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }
