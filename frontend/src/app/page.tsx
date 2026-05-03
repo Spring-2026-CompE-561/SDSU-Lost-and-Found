@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import PostCard from "@/components/post-card";
+import ConversationPanel from "@/components/conversation-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Inbox, PlusCircle, Search } from "lucide-react";
-import { apiFetch } from "@/lib/api";
-
+import { PlusCircle, Search } from "lucide-react";
+import { apiFetch, createConversation, getApiErrorMessage } from "@/lib/api";
 
 type ItemPost = {
   id: number;
@@ -23,26 +24,34 @@ type ItemPost = {
 };
 
 export default function Home() {
+  const router = useRouter();
+
   const [posts, setPosts] = useState<ItemPost[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-  async function fetchPosts() {
-    try {
-      const data = await apiFetch<ItemPost[]>("/api/v1/home/");
-      setPosts(data);
-    } catch {
-      setErrorMessage("Could not connect to the backend server.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const [activeConversationId, setActiveConversationId] = useState<
+    number | null
+  >(null);
+  const [conversationRefreshKey, setConversationRefreshKey] = useState(0);
+  const [messageActionError, setMessageActionError] = useState("");
 
-  fetchPosts();
-}, []);
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        const data = await apiFetch<ItemPost[]>("/api/v1/home/");
+        setPosts(data);
+      } catch {
+        setErrorMessage("Could not connect to the backend server.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchPosts();
+  }, []);
 
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
@@ -71,6 +80,33 @@ export default function Home() {
         ? currentFilters.filter((currentFilter) => currentFilter !== filter)
         : [...currentFilters, filter],
     );
+  }
+
+  async function handleMessageAboutItem(ownerUserId: number) {
+    const token = localStorage.getItem("token");
+    const storedUserId = localStorage.getItem("userId");
+    const currentUserId = storedUserId ? Number(storedUserId) : null;
+
+    if (!token) {
+      router.push("/login?message=signin-required&redirect=/");
+      return;
+    }
+
+    if (currentUserId === ownerUserId) {
+      setMessageActionError("You cannot message yourself about your own post.");
+      return;
+    }
+
+    try {
+      setMessageActionError("");
+
+      const conversation = await createConversation(ownerUserId);
+
+      setActiveConversationId(conversation.id);
+      setConversationRefreshKey((currentKey) => currentKey + 1);
+    } catch (error) {
+      setMessageActionError(getApiErrorMessage(error));
+    }
   }
 
   return (
@@ -124,6 +160,12 @@ export default function Home() {
 
         {/* Center — Feed */}
         <main className="space-y-5">
+          {messageActionError && (
+            <section className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {messageActionError}
+            </section>
+          )}
+
           {isLoading && (
             <section className="rounded-xl border border-gray-200 bg-white px-8 py-16 text-center shadow-sm">
               <p className="text-gray-600">Loading posts...</p>
@@ -141,7 +183,11 @@ export default function Home() {
           {!isLoading && !errorMessage && filteredPosts.length > 0 && (
             <>
               {filteredPosts.map((post) => (
-                <PostCard key={post.id} {...post} />
+                <PostCard
+                  key={post.id}
+                  {...post}
+                  onMessageAboutItem={handleMessageAboutItem}
+                />
               ))}
             </>
           )}
@@ -174,50 +220,10 @@ export default function Home() {
 
         {/* Right — Messages */}
         <aside>
-          <section className="min-h-[470px] rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-[#C8102E]">
-                <Inbox size={22} />
-              </div>
-
-              <div>
-                <h2 className="font-heading text-lg font-bold text-gray-900">
-                  Messages
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Conversations about item recovery
-                </p>
-              </div>
-            </div>
-
-            <div className="flex min-h-[300px] items-center justify-center text-center">
-              <div>
-                <h3 className="font-heading text-xl font-bold text-gray-900">
-                  No conversations yet
-                </h3>
-
-                <p className="mt-3 max-w-xs text-sm leading-6 text-gray-600">
-                  When someone responds to your lost or found item post, the
-                  conversation will appear here.
-                </p>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-100 pt-4">
-              <Input
-                disabled
-                placeholder="Select a conversation to send a message"
-                className="mb-3 bg-gray-50 text-sm"
-              />
-
-              <Button
-                disabled
-                className="w-full bg-[#C8102E] font-heading font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Send
-              </Button>
-            </div>
-          </section>
+          <ConversationPanel
+            activeConversationId={activeConversationId}
+            refreshKey={conversationRefreshKey}
+          />
         </aside>
       </div>
     </div>

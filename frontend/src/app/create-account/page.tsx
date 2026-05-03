@@ -203,7 +203,7 @@ export default function CreateAccountPage() {
                     id="firstName"
                     name="firstName"
                     type="text"
-                    placeholder="Alan"
+                    placeholder="Your Name"
                     maxLength={15}
                     className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
                   />
@@ -221,7 +221,7 @@ export default function CreateAccountPage() {
                     id="lastName"
                     name="lastName"
                     type="text"
-                    placeholder="Alaniz"
+                    placeholder="Your Last Name"
                     maxLength={15}
                     className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
                   />
