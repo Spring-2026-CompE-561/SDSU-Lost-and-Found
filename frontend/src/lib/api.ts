@@ -77,3 +77,86 @@ export async function apiFetch<T>(
 
   return data as T;
 }
+// Conversation API types
+
+export type ConversationListItem = {
+  id: number;
+  partner_id: number;
+  partner_name: string;
+  last_message: string | null;
+};
+
+export type ConversationOut = {
+  id: number;
+  participant_ids: number[];
+};
+
+export type MessageListItem = {
+  id: number;
+  sender_id: number;
+  message_text: string;
+  created_at: string;
+};
+
+export type MessageOut = {
+  id: number;
+  sender_id: number;
+  message_text: string;
+  is_read: boolean;
+  created_at: string;
+};
+
+export type SuccessResponse = {
+  success: boolean;
+};
+
+// Conversation API functions
+
+export function getConversations(limit = 50, offset = 0) {
+  return apiFetch<ConversationListItem[]>(
+    `/api/v1/conversations/?limit=${limit}&offset=${offset}`,
+  );
+}
+
+export function createConversation(recipientId: number) {
+  return apiFetch<ConversationOut>("/api/v1/conversations/", {
+    method: "POST",
+    body: JSON.stringify({
+      recipient_id: recipientId,
+    }),
+  });
+}
+
+export function deleteConversation(conversationId: number) {
+  return apiFetch<SuccessResponse>(`/api/v1/conversations/${conversationId}`, {
+    method: "DELETE",
+  });
+}
+
+export function getConversationMessages(
+  conversationId: number,
+  limit = 50,
+  offset = 0,
+) {
+  return apiFetch<MessageListItem[]>(
+    `/api/v1/conversations/${conversationId}/messages?limit=${limit}&offset=${offset}`,
+  );
+}
+
+export function sendConversationMessage(conversationId: number, content: string) {
+  return apiFetch<MessageOut>(
+    `/api/v1/conversations/${conversationId}/messages`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        content,
+      }),
+    },
+  );
+}
+
+export function deleteMessage(messageId: number) {
+  return apiFetch<SuccessResponse>(`/api/v1/messages/${messageId}`, {
+    method: "DELETE",
+  });
+}
