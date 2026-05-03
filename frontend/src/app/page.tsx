@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import PostCard from "@/components/post-card";
+import ConversationPanel from "@/components/conversation-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircle, Search } from "lucide-react";
-import { apiFetch } from "@/lib/api";
-import ConversationPanel from "@/components/conversation-panel";
+import { apiFetch, createConversation, getApiErrorMessage } from "@/lib/api";
 
 type ItemPost = {
   id: number;
@@ -23,26 +24,34 @@ type ItemPost = {
 };
 
 export default function Home() {
+  const router = useRouter();
+
   const [posts, setPosts] = useState<ItemPost[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-  async function fetchPosts() {
-    try {
-      const data = await apiFetch<ItemPost[]>("/api/v1/home/");
-      setPosts(data);
-    } catch {
-      setErrorMessage("Could not connect to the backend server.");
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const [activeConversationId, setActiveConversationId] = useState<
+    number | null
+  >(null);
+  const [conversationRefreshKey, setConversationRefreshKey] = useState(0);
+  const [messageActionError, setMessageActionError] = useState("");
 
-  fetchPosts();
-}, []);
+  useEffect(() => {
+    async function fetchPosts() {
+      try {
+        const data = await apiFetch<ItemPost[]>("/api/v1/home/");
+        setPosts(data);
+      } catch {
+        setErrorMessage("Could not connect to the backend server.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchPosts();
+  }, []);
 
   const filteredPosts = useMemo(() => {
     return posts.filter((post) => {
@@ -71,6 +80,33 @@ export default function Home() {
         ? currentFilters.filter((currentFilter) => currentFilter !== filter)
         : [...currentFilters, filter],
     );
+  }
+
+  async function handleMessageAboutItem(ownerUserId: number) {
+    const token = localStorage.getItem("token");
+    const storedUserId = localStorage.getItem("userId");
+    const currentUserId = storedUserId ? Number(storedUserId) : null;
+
+    if (!token) {
+      router.push("/login?message=signin-required&redirect=/");
+      return;
+    }
+
+    if (currentUserId === ownerUserId) {
+      setMessageActionError("You cannot message yourself about your own post.");
+      return;
+    }
+
+    try {
+      setMessageActionError("");
+
+      const conversation = await createConversation(ownerUserId);
+
+      setActiveConversationId(conversation.id);
+      setConversationRefreshKey((currentKey) => currentKey + 1);
+    } catch (error) {
+      setMessageActionError(getApiErrorMessage(error));
+    }
   }
 
   return (
@@ -124,6 +160,12 @@ export default function Home() {
 
         {/* Center — Feed */}
         <main className="space-y-5">
+          {messageActionError && (
+            <section className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {messageActionError}
+            </section>
+          )}
+
           {isLoading && (
             <section className="rounded-xl border border-gray-200 bg-white px-8 py-16 text-center shadow-sm">
               <p className="text-gray-600">Loading posts...</p>
@@ -141,7 +183,11 @@ export default function Home() {
           {!isLoading && !errorMessage && filteredPosts.length > 0 && (
             <>
               {filteredPosts.map((post) => (
-                <PostCard key={post.id} {...post} />
+                <PostCard
+                  key={post.id}
+                  {...post}
+                  onMessageAboutItem={handleMessageAboutItem}
+                />
               ))}
             </>
           )}
@@ -174,7 +220,10 @@ export default function Home() {
 
         {/* Right — Messages */}
         <aside>
-           <ConversationPanel />
+          <ConversationPanel
+            activeConversationId={activeConversationId}
+            refreshKey={conversationRefreshKey}
+          />
         </aside>
       </div>
     </div>

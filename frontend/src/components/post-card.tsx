@@ -4,6 +4,7 @@ import { MapPin, MessageCircle } from "lucide-react";
 
 interface PostCardProps {
   id: number;
+  user_id: number;
   title: string;
   description: string;
   location: string;
@@ -11,6 +12,7 @@ interface PostCardProps {
   image_url: string | null;
   given_back: boolean;
   created_at: string;
+  onMessageAboutItem?: (ownerUserId: number) => void;
 }
 
 function formatDate(date: string) {
@@ -21,6 +23,7 @@ function formatDate(date: string) {
 }
 
 export default function PostCard({
+  user_id,
   title,
   description,
   location,
@@ -28,6 +31,7 @@ export default function PostCard({
   image_url,
   given_back,
   created_at,
+  onMessageAboutItem,
 }: PostCardProps) {
   const isLost = report_type === "lost";
 
@@ -78,7 +82,11 @@ export default function PostCard({
 
         <p className="mb-5 text-sm leading-6 text-gray-700">{description}</p>
 
-        <Button className="w-full bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24]">
+        <Button
+          type="button"
+          onClick={() => onMessageAboutItem?.(user_id)}
+          className="w-full bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24]"
+        >
           <MessageCircle className="mr-2 h-4 w-4" />
           Message About Item
         </Button>

@@ -13,6 +13,11 @@ import {
   sendConversationMessage,
 } from "@/lib/api";
 
+type ConversationPanelProps = {
+  activeConversationId?: number | null;
+  refreshKey?: number;
+};
+
 function getStoredUserId() {
   if (typeof window === "undefined") {
     return null;
@@ -29,7 +34,10 @@ function getStoredUserId() {
   return Number.isNaN(parsedUserId) ? null : parsedUserId;
 }
 
-export default function ConversationPanel() {
+export default function ConversationPanel({
+    activeConversationId = null,
+    refreshKey = 0,
+}: ConversationPanelProps) {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
@@ -69,9 +77,20 @@ export default function ConversationPanel() {
 
       setConversations(data);
 
-      if (!selectedConversationId && data.length > 0) {
+      const shouldOpenActiveConversation =
+        activeConversationId &&
+        data.some((conversation) => conversation.id === activeConversationId);
+
+    if (shouldOpenActiveConversation) {
+        setSelectedConversationId(activeConversationId);
+    } else if (!selectedConversationId && data.length > 0) {
         setSelectedConversationId(data[0].id);
-      }
+    } else if (
+        selectedConversationId &&
+        !data.some((conversation) => conversation.id === selectedConversationId)
+    ) {
+        setSelectedConversationId(data[0]?.id ?? null);
+    }
     } catch (error) {
       setErrorMessage(getApiErrorMessage(error));
     } finally {
@@ -131,7 +150,7 @@ export default function ConversationPanel() {
 
   return () => window.clearTimeout(timeoutId);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, []);
+}, [refreshKey]);
 
 useEffect(() => {
   const timeoutId = window.setTimeout(() => {
