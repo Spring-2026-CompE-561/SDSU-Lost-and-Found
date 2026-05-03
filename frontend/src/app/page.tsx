@@ -6,9 +6,9 @@ import Navbar from "@/components/navbar";
 import PostCard from "@/components/post-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Inbox, PlusCircle, Search } from "lucide-react";
+import { PlusCircle, Search } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-
+import ConversationPanel from "@/components/conversation-panel";
 
 type ItemPost = {
   id: number;
@@ -174,50 +174,7 @@ export default function Home() {
 
         {/* Right — Messages */}
         <aside>
-          <section className="min-h-[470px] rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-            <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-[#C8102E]">
-                <Inbox size={22} />
-              </div>
-
-              <div>
-                <h2 className="font-heading text-lg font-bold text-gray-900">
-                  Messages
-                </h2>
-                <p className="text-sm text-gray-500">
-                  Conversations about item recovery
-                </p>
-              </div>
-            </div>
-
-            <div className="flex min-h-[300px] items-center justify-center text-center">
-              <div>
-                <h3 className="font-heading text-xl font-bold text-gray-900">
-                  No conversations yet
-                </h3>
-
-                <p className="mt-3 max-w-xs text-sm leading-6 text-gray-600">
-                  When someone responds to your lost or found item post, the
-                  conversation will appear here.
-                </p>
-              </div>
-            </div>
-
-            <div className="border-t border-gray-100 pt-4">
-              <Input
-                disabled
-                placeholder="Select a conversation to send a message"
-                className="mb-3 bg-gray-50 text-sm"
-              />
-
-              <Button
-                disabled
-                className="w-full bg-[#C8102E] font-heading font-bold text-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Send
-              </Button>
-            </div>
-          </section>
+           <ConversationPanel />
         </aside>
       </div>
     </div>
