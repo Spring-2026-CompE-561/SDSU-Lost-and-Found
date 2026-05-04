@@ -5,11 +5,12 @@ from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_user_id
 from app.core.db import get_db
+
 from app.schemas.items import (
     ItemCreate,
     ItemListItem,
     ItemOut,
-    ItemStatusUpdate,
+    ItemUpdate,
     SuccessResponse,
 )
 import app.services.items as item_service
@@ -61,14 +62,14 @@ def create_item(
 
 # PUT /home/{item_id}
 @api_router.put("/{item_id}", response_model=SuccessResponse)
-def update_item_status(
+def update_item(
     item_id: int,
-    body: ItemStatusUpdate,
+    body: ItemUpdate,
     db: DB,
     current_user_id: CurrentUserId,
 ):
-    """Update item returned status."""
-    item_service.update_item_status(db, current_user_id, item_id, body)
+    """Update an item post if the logged-in user owns it."""
+    item_service.update_item(db, current_user_id, item_id, body)
     return SuccessResponse()
 
 
