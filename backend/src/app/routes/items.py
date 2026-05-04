@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
@@ -11,6 +11,7 @@ from app.schemas.items import (
     ItemListItem,
     ItemOut,
     ItemUpdate,
+    ReportType,
     SuccessResponse,
 )
 import app.services.items as item_service
@@ -27,9 +28,23 @@ def list_items(
     db: DB,
     limit: int = Query(50, ge=1),
     offset: int = Query(0, ge=0),
+    search: str | None = Query(None, min_length=1),
+    report_type: ReportType | None = Query(None),
+    location: str | None = Query(None, min_length=1),
+    date_range: Literal["today", "7", "30"] | None = Query(None),
+    active_only: bool = Query(True),
 ):
-    """List item posts in the database."""
-    return item_service.list_items(db, limit, offset)
+    """List item posts with optional search and filters."""
+    return item_service.list_items(
+        db=db,
+        limit=limit,
+        offset=offset,
+        search=search,
+        report_type=report_type,
+        location=location,
+        date_range=date_range,
+        active_only=active_only,
+    )
 
 # GET /home/my-posts
 @api_router.get("/my-posts", response_model=list[ItemListItem])
