@@ -8,6 +8,8 @@ from app.schemas.items import ItemCreate, ItemStatusUpdate
 def list_items(db: Session, limit: int, offset: int):
     return ItemRepository.list_all(db, limit, offset)
 
+def list_items_for_user(db: Session, current_user_id: int, limit: int, offset: int):
+    return ItemRepository.list_for_user(db, current_user_id, limit, offset)
 
 def get_item_by_id(db: Session, item_id: int):
     item = ItemRepository.get_by_id(db, item_id)

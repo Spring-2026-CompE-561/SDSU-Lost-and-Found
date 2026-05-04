@@ -69,8 +69,9 @@ export default function Home() {
         (!wantsLost && !wantsFound) ||
         (wantsLost && post.report_type === "lost") ||
         (wantsFound && post.report_type === "found");
+      const isActive = !post.given_back;
 
-      return matchesSearch && matchesStatus;
+      return isActive && matchesSearch && matchesStatus;
     });
   }, [posts, searchTerm, selectedFilters]);
 
@@ -135,7 +136,7 @@ export default function Home() {
           </h2>
 
           <ul className="space-y-3 text-sm text-gray-700">
-            {["Location", "Date", "Status: Lost", "Status: Found", "Color"].map(
+            {["Location", "Date", "Status: Lost", "Status: Found"].map(
               (filter) => (
                 <li key={filter}>
                   <label className="flex cursor-pointer items-center gap-2 hover:text-[#C8102E]">
@@ -153,7 +154,7 @@ export default function Home() {
           </ul>
 
           <p className="mt-5 text-xs leading-5 text-gray-500">
-            Status filters work now. Location, date, and color filters will be
+            Location, date, and color filters will be
             connected later.
           </p>
         </aside>

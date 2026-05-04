@@ -3,9 +3,10 @@
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
+import MyPostsPanel from "@/components/my-posts-panel";
 import { Button } from "@/components/ui/button";
 import { apiFetch, getApiErrorMessage } from "@/lib/api";
-import { Mail, UserRound, LogOut } from "lucide-react";
+import { LogOut } from "lucide-react";
 
 type UserResponse = {
   id: number;
@@ -162,56 +163,16 @@ export default function AccountPage() {
 
           <div className="mt-6 h-[2px] w-28 bg-[#C8102E]" />
 
-          <p className="mt-8 max-w-2xl text-xl leading-8 text-gray-700">
-            View and update your SDSU Lost &amp; Found profile information.
+          <p className="mt-8 max-w-3xl text-xl leading-8 text-gray-700">
+            Your account is used to create posts, manage item recovery, and
+            communicate with other users through the messaging system.
           </p>
         </div>
       </section>
 
       <section className="px-6 py-16 md:px-16">
-        <div className="mx-auto grid max-w-5xl items-start gap-10 md:grid-cols-[1fr_460px]">
-          <div>
-            <h2 className="font-heading text-3xl font-semibold text-gray-900">
-              Account details
-            </h2>
-
-            <p className="mt-5 text-lg leading-8 text-gray-700">
-              Your account is used to create posts, manage item recovery, and
-              communicate with other users through the messaging system.
-            </p>
-
-            <div className="mt-8 space-y-5">
-              <div className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#C8102E]">
-                  <UserRound size={22} />
-                </div>
-
-                <div>
-                  <h3 className="font-heading text-lg font-bold text-gray-900">
-                    Profile name
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-600">
-                    This name appears in conversations with other users.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
-                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-50 text-[#C8102E]">
-                  <Mail size={22} />
-                </div>
-
-                <div>
-                  <h3 className="font-heading text-lg font-bold text-gray-900">
-                    SDSU email
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-600">
-                    This app is intended for SDSU campus users.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="mx-auto grid max-w-6xl items-start gap-10 lg:grid-cols-[1fr_460px]">
+          <MyPostsPanel />
 
           <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
             <h2 className="font-heading text-2xl font-bold text-gray-900">

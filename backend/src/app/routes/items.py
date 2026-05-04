@@ -30,6 +30,16 @@ def list_items(
     """List item posts in the database."""
     return item_service.list_items(db, limit, offset)
 
+# GET /home/my-posts
+@api_router.get("/my-posts", response_model=list[ItemListItem])
+def list_my_items(
+    db: DB,
+    current_user_id: CurrentUserId,
+    limit: int = Query(50, ge=1),
+    offset: int = Query(0, ge=0),
+):
+    """List item posts created by the logged-in user."""
+    return item_service.list_items_for_user(db, current_user_id, limit, offset)
 
 # GET /home/{item_id}
 @api_router.get("/{item_id}", response_model=ItemOut)
