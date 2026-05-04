@@ -13,6 +13,17 @@ class UserBase(BaseModel):
 
     email: EmailStr
 
+    @field_validator("email")
+    @classmethod
+    def email_must_be_sdsu(cls, email: EmailStr) -> EmailStr:
+        """Validate that the email belongs to SDSU."""
+        email_string = str(email).lower().strip()
+
+        if not email_string.endswith("@sdsu.edu"):
+            raise ValueError("Email must be a valid SDSU email address.")
+
+        return email_string
+
 
 class UserCreate(UserBase):
     """Schema for creating a new user."""
@@ -58,6 +69,20 @@ class UserUpdate(BaseModel):
     last_name: str | None = Field(None, min_length=1, max_length=15)
     email: EmailStr | None = None
 
+    @field_validator("email")
+    @classmethod
+    def email_must_be_sdsu(cls, email: EmailStr | None) -> EmailStr | None:
+        """Validate that updated email belongs to SDSU."""
+        if email is None:
+            return None
+
+        email_string = str(email).lower().strip()
+
+        if not email_string.endswith("@sdsu.edu"):
+            raise ValueError("Email must be a valid SDSU email address.")
+
+        return email_string
+    
     @field_validator("first_name", "last_name")
     @classmethod
     def name_must_not_be_blank(cls, name: str | None) -> str | None:
