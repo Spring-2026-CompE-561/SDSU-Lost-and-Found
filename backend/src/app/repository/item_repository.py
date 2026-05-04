@@ -88,7 +88,16 @@ class ItemRepository:
         db.commit()
         db.refresh(db_item)
         return db_item
+    
+    @staticmethod
+    def update_fields(db: Session, db_item: Item, fields: dict) -> Item:
+        for field_name, field_value in fields.items():
+            setattr(db_item, field_name, field_value)
 
+        db.commit()
+        db.refresh(db_item)
+        return db_item
+    
     @staticmethod
     def delete(db: Session, db_item: Item) -> None:
         db.delete(db_item)

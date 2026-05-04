@@ -64,13 +64,7 @@ export default function PostCard({
           </div>
 
           <div className="flex flex-col items-end gap-2">
-            <Badge
-              className={
-                isLost
-                  ? "bg-[#C8102E] text-white"
-                  : "bg-green-600 text-white"
-              }
-            >
+            <Badge className="bg-[#C8102E] text-white">
               {isLost ? "Lost" : "Found"}
             </Badge>
 

@@ -69,8 +69,9 @@ export default function Home() {
         (!wantsLost && !wantsFound) ||
         (wantsLost && post.report_type === "lost") ||
         (wantsFound && post.report_type === "found");
+      const isActive = !post.given_back;
 
-      return matchesSearch && matchesStatus;
+      return isActive && matchesSearch && matchesStatus;
     });
   }, [posts, searchTerm, selectedFilters]);
 
@@ -127,15 +128,15 @@ export default function Home() {
       </div>
 
       {/* Main 3-column layout */}
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[220px_1fr_340px]">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)_390px]">
         {/* Left — Filters */}
-        <aside className="h-fit rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <aside className="h-fit rounded-lg border border-gray-200 bg-white p-5 shadow-sm lg:sticky lg:top-6 lg:self-start">
           <h2 className="mb-4 font-heading text-sm font-bold uppercase tracking-wide text-gray-800">
             Filters
           </h2>
 
           <ul className="space-y-3 text-sm text-gray-700">
-            {["Location", "Date", "Status: Lost", "Status: Found", "Color"].map(
+            {["Location", "Date", "Status: Lost", "Status: Found"].map(
               (filter) => (
                 <li key={filter}>
                   <label className="flex cursor-pointer items-center gap-2 hover:text-[#C8102E]">
@@ -153,7 +154,7 @@ export default function Home() {
           </ul>
 
           <p className="mt-5 text-xs leading-5 text-gray-500">
-            Status filters work now. Location, date, and color filters will be
+            Location, date, and color filters will be
             connected later.
           </p>
         </aside>
@@ -219,7 +220,7 @@ export default function Home() {
         </main>
 
         {/* Right — Messages */}
-        <aside>
+        <aside className="lg:sticky lg:top-6 lg:self-start">
           <ConversationPanel
             activeConversationId={activeConversationId}
             refreshKey={conversationRefreshKey}

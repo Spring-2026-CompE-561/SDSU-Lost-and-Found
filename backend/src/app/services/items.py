@@ -2,12 +2,13 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.repository.item_repository import ItemRepository
-from app.schemas.items import ItemCreate, ItemStatusUpdate
-
+from app.schemas.items import ItemCreate, ItemUpdate
 
 def list_items(db: Session, limit: int, offset: int):
     return ItemRepository.list_all(db, limit, offset)
 
+def list_items_for_user(db: Session, current_user_id: int, limit: int, offset: int):
+    return ItemRepository.list_for_user(db, current_user_id, limit, offset)
 
 def get_item_by_id(db: Session, item_id: int):
     item = ItemRepository.get_by_id(db, item_id)
@@ -34,11 +35,11 @@ def create_item(db: Session, body: ItemCreate, current_user_id: int):
     )
 
 
-def update_item_status(
+def update_item(
     db: Session,
     current_user_id: int,
     item_id: int,
-    body: ItemStatusUpdate,
+    body: ItemUpdate,
 ):
     item = ItemRepository.get_by_id(db, item_id)
 
@@ -54,7 +55,15 @@ def update_item_status(
             detail="Not allowed to update this item",
         )
 
-    return ItemRepository.update_status(db, item, body.given_back)
+    update_data = body.model_dump(exclude_unset=True)
+
+    if not update_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No update fields were provided",
+        )
+
+    return ItemRepository.update_fields(db, item, update_data)
 
 
 def delete_item(db: Session, current_user_id: int, item_id: int):
