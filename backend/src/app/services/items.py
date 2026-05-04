@@ -4,8 +4,26 @@ from sqlalchemy.orm import Session
 from app.repository.item_repository import ItemRepository
 from app.schemas.items import ItemCreate, ItemUpdate
 
-def list_items(db: Session, limit: int, offset: int):
-    return ItemRepository.list_all(db, limit, offset)
+def list_items(
+    db: Session,
+    limit: int,
+    offset: int,
+    search: str | None = None,
+    report_type: str | None = None,
+    location: str | None = None,
+    date_range: str | None = None,
+    active_only: bool = True,
+):
+    return ItemRepository.list_filtered(
+        db=db,
+        limit=limit,
+        offset=offset,
+        search=search,
+        report_type=report_type,
+        location=location,
+        date_range=date_range,
+        active_only=active_only,
+    )
 
 def list_items_for_user(db: Session, current_user_id: int, limit: int, offset: int):
     return ItemRepository.list_for_user(db, current_user_id, limit, offset)

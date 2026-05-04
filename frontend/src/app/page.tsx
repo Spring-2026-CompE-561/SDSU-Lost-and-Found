@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
@@ -23,12 +23,17 @@ type ItemPost = {
   created_at: string;
 };
 
+type ReportType = "lost" | "found";
+
 export default function Home() {
   const router = useRouter();
 
   const [posts, setPosts] = useState<ItemPost[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<ReportType[]>([]);
+  const [locationFilter, setLocationFilter] = useState("");
+  const [dateRange, setDateRange] = useState("");
+
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -39,48 +44,70 @@ export default function Home() {
   const [messageActionError, setMessageActionError] = useState("");
 
   useEffect(() => {
-    async function fetchPosts() {
-      try {
-        const data = await apiFetch<ItemPost[]>("/api/v1/home/");
-        setPosts(data);
-      } catch {
-        setErrorMessage("Could not connect to the backend server.");
-      } finally {
-        setIsLoading(false);
+    const timeoutId = window.setTimeout(() => {
+      async function fetchPosts() {
+        try {
+          setIsLoading(true);
+          setErrorMessage("");
+
+          const params = new URLSearchParams();
+
+          params.set("limit", "50");
+          params.set("offset", "0");
+          params.set("active_only", "true");
+
+          const trimmedSearch = searchTerm.trim();
+          const trimmedLocation = locationFilter.trim();
+
+          if (trimmedSearch) {
+            params.set("search", trimmedSearch);
+          }
+
+          if (trimmedLocation) {
+            params.set("location", trimmedLocation);
+          }
+
+          if (dateRange) {
+            params.set("date_range", dateRange);
+          }
+
+          // Backend accepts one report_type at a time.
+          // If both or none are selected, we show all active posts.
+          if (selectedStatuses.length === 1) {
+            params.set("report_type", selectedStatuses[0]);
+          }
+
+          const data = await apiFetch<ItemPost[]>(
+            `/api/v1/home/?${params.toString()}`,
+          );
+
+          setPosts(data);
+        } catch {
+          setErrorMessage("Could not connect to the backend server.");
+        } finally {
+          setIsLoading(false);
+        }
       }
-    }
 
-    fetchPosts();
-  }, []);
+      fetchPosts();
+    }, 300);
 
-  const filteredPosts = useMemo(() => {
-    return posts.filter((post) => {
-      const normalizedSearch = searchTerm.toLowerCase();
+    return () => window.clearTimeout(timeoutId);
+  }, [searchTerm, selectedStatuses, locationFilter, dateRange]);
 
-      const matchesSearch =
-        post.title.toLowerCase().includes(normalizedSearch) ||
-        post.description.toLowerCase().includes(normalizedSearch) ||
-        post.location.toLowerCase().includes(normalizedSearch);
-
-      const wantsLost = selectedFilters.includes("Status: Lost");
-      const wantsFound = selectedFilters.includes("Status: Found");
-
-      const matchesStatus =
-        (!wantsLost && !wantsFound) ||
-        (wantsLost && post.report_type === "lost") ||
-        (wantsFound && post.report_type === "found");
-      const isActive = !post.given_back;
-
-      return isActive && matchesSearch && matchesStatus;
-    });
-  }, [posts, searchTerm, selectedFilters]);
-
-  function toggleFilter(filter: string) {
-    setSelectedFilters((currentFilters) =>
-      currentFilters.includes(filter)
-        ? currentFilters.filter((currentFilter) => currentFilter !== filter)
-        : [...currentFilters, filter],
+  function toggleStatusFilter(status: ReportType) {
+    setSelectedStatuses((currentStatuses) =>
+      currentStatuses.includes(status)
+        ? currentStatuses.filter((currentStatus) => currentStatus !== status)
+        : [...currentStatuses, status],
     );
+  }
+
+  function clearFilters() {
+    setSearchTerm("");
+    setSelectedStatuses([]);
+    setLocationFilter("");
+    setDateRange("");
   }
 
   async function handleMessageAboutItem(ownerUserId: number) {
@@ -110,6 +137,12 @@ export default function Home() {
     }
   }
 
+  const hasActiveFilters =
+    searchTerm.trim() ||
+    selectedStatuses.length > 0 ||
+    locationFilter.trim() ||
+    dateRange;
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -121,7 +154,7 @@ export default function Home() {
           <Input
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search lost & found items..."
+            placeholder="Search by title, description, or location..."
             className="rounded-md border border-gray-300 bg-white pl-9"
           />
         </div>
@@ -135,28 +168,91 @@ export default function Home() {
             Filters
           </h2>
 
-          <ul className="space-y-3 text-sm text-gray-700">
-            {["Location", "Date", "Status: Lost", "Status: Found"].map(
-              (filter) => (
-                <li key={filter}>
-                  <label className="flex cursor-pointer items-center gap-2 hover:text-[#C8102E]">
-                    <input
-                      type="checkbox"
-                      checked={selectedFilters.includes(filter)}
-                      onChange={() => toggleFilter(filter)}
-                      className="accent-[#C8102E]"
-                    />
-                    {filter}
-                  </label>
-                </li>
-              ),
-            )}
-          </ul>
+          <div className="space-y-6">
+            {/* Status */}
+            <section>
+              <h3 className="mb-3 font-heading text-xs font-bold uppercase tracking-wide text-gray-500">
+                Status
+              </h3>
 
-          <p className="mt-5 text-xs leading-5 text-gray-500">
-            Location, date, and color filters will be
-            connected later.
-          </p>
+              <div className="space-y-3 text-sm text-gray-700">
+                <label className="flex cursor-pointer items-center gap-2 hover:text-[#C8102E]">
+                  <input
+                    type="checkbox"
+                    checked={selectedStatuses.includes("lost")}
+                    onChange={() => toggleStatusFilter("lost")}
+                    className="accent-[#C8102E]"
+                  />
+                  Lost
+                </label>
+
+                <label className="flex cursor-pointer items-center gap-2 hover:text-[#C8102E]">
+                  <input
+                    type="checkbox"
+                    checked={selectedStatuses.includes("found")}
+                    onChange={() => toggleStatusFilter("found")}
+                    className="accent-[#C8102E]"
+                  />
+                  Found
+                </label>
+              </div>
+            </section>
+
+            {/* Location */}
+            <section>
+              <label
+                htmlFor="locationFilter"
+                className="mb-3 block font-heading text-xs font-bold uppercase tracking-wide text-gray-500"
+              >
+                Location
+              </label>
+
+              <input
+                id="locationFilter"
+                type="text"
+                value={locationFilter}
+                onChange={(event) => setLocationFilter(event.target.value)}
+                placeholder="Library, Union..."
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+              />
+            </section>
+
+            {/* Date */}
+            <section>
+              <label
+                htmlFor="dateRange"
+                className="mb-3 block font-heading text-xs font-bold uppercase tracking-wide text-gray-500"
+              >
+                Date
+              </label>
+
+              <select
+                id="dateRange"
+                value={dateRange}
+                onChange={(event) => setDateRange(event.target.value)}
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+              >
+                <option value="">Any time</option>
+                <option value="today">Today</option>
+                <option value="7">Last 7 days</option>
+                <option value="30">Last 30 days</option>
+              </select>
+            </section>
+
+            {hasActiveFilters && (
+              <Button
+                type="button"
+                onClick={clearFilters}
+                className="w-full border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100"
+              >
+                Clear Filters
+              </Button>
+            )}
+
+            <p className="text-xs leading-5 text-gray-500">
+              Returned items are hidden from the home feed automatically.
+            </p>
+          </div>
         </aside>
 
         {/* Center — Feed */}
@@ -181,9 +277,9 @@ export default function Home() {
             </section>
           )}
 
-          {!isLoading && !errorMessage && filteredPosts.length > 0 && (
+          {!isLoading && !errorMessage && posts.length > 0 && (
             <>
-              {filteredPosts.map((post) => (
+              {posts.map((post) => (
                 <PostCard
                   key={post.id}
                   {...post}
@@ -193,7 +289,7 @@ export default function Home() {
             </>
           )}
 
-          {!isLoading && !errorMessage && filteredPosts.length === 0 && (
+          {!isLoading && !errorMessage && posts.length === 0 && (
             <section className="flex min-h-[470px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white px-8 py-16 text-center shadow-sm">
               <div className="max-w-md">
                 <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-[#C8102E]">
@@ -201,12 +297,12 @@ export default function Home() {
                 </div>
 
                 <h1 className="mt-6 font-heading text-3xl font-bold text-gray-900">
-                  No items posted yet
+                  No matching items found
                 </h1>
 
                 <p className="mt-4 text-base leading-7 text-gray-600">
-                  Lost and found posts will appear here once users start
-                  creating real item reports.
+                  Try changing your search or filters. If you lost or found an
+                  item, you can also create a new post.
                 </p>
 
                 <Link href="/create-post">
