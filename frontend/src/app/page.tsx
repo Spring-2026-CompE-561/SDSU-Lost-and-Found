@@ -130,7 +130,7 @@ export default function Home() {
       {/* Main 3-column layout */}
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[220px_1fr_340px]">
         {/* Left — Filters */}
-        <aside className="h-fit rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <aside className="h-fit rounded-lg border border-gray-200 bg-white p-5 shadow-sm lg:sticky lg:top-6 lg:self-start">
           <h2 className="mb-4 font-heading text-sm font-bold uppercase tracking-wide text-gray-800">
             Filters
           </h2>
@@ -220,12 +220,14 @@ export default function Home() {
         </main>
 
         {/* Right — Messages */}
-        <aside>
-          <ConversationPanel
-            activeConversationId={activeConversationId}
-            refreshKey={conversationRefreshKey}
-          />
-        </aside>
+<aside className="lg:sticky lg:top-6 lg:self-start">
+  <div className="max-h-[calc(100vh-3rem)] overflow-y-auto rounded-xl">
+    <ConversationPanel
+      activeConversationId={activeConversationId}
+      refreshKey={conversationRefreshKey}
+    />
+  </div>
+</aside>
       </div>
     </div>
   );
