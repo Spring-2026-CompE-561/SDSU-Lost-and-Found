@@ -1,10 +1,19 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
-import { apiFetch, getApiErrorMessage } from "@/lib/api";
+import { Spinner } from "@/components/ui/spinner";
+import { apiFetch, getApiErrorMessage, uploadImage } from "@/lib/api";
+
+const ACCEPTED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 export default function CreatePostPage() {
   const router = useRouter();
@@ -12,6 +21,9 @@ export default function CreatePostPage() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -20,6 +32,43 @@ export default function CreatePostPage() {
         router.replace("/login?message=signin-required&redirect=/create-post");
     }
 }, [router]);
+
+  useEffect(() => {
+    if (!imagePreview) return;
+
+    return () => URL.revokeObjectURL(imagePreview);
+  }, [imagePreview]);
+
+  function handleImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+
+    setImageError(null);
+
+    if (!file) {
+      setImageFile(null);
+      setImagePreview(null);
+      return;
+    }
+
+    if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
+      setImageError("Use JPEG, PNG, GIF, or WebP.");
+      setImageFile(null);
+      setImagePreview(null);
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setImageError("Image must be 5 MB or smaller.");
+      setImageFile(null);
+      setImagePreview(null);
+      event.target.value = "";
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  }
 
   async function handleCreatePost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,11 +86,10 @@ export default function CreatePostPage() {
 
     const formData = new FormData(event.currentTarget);
 
-    const reportType = String(formData.get("reportType") || "lost");
-    const title = String(formData.get("title") || "").trim();
-    const description = String(formData.get("description") || "").trim();
-    const location = String(formData.get("location") || "").trim();
-    const imageUrl = String(formData.get("imageUrl") || "").trim();
+    const reportType = String(formData.get("reportType") ?? "lost");
+    const title = String(formData.get("title") ?? "").trim();
+    const description = String(formData.get("description") ?? "").trim();
+    const location = String(formData.get("location") ?? "").trim();
 
     if (!title || !description || !location) {
       setIsError(true);
@@ -51,17 +99,25 @@ export default function CreatePostPage() {
     }
 
     try {
-      await apiFetch("/api/v1/home/", {
-        method: "POST",
-        body: JSON.stringify({
+      let uploadedImageUrl: string | null = null;
+      if (imageFile) {
+        uploadedImageUrl = await uploadImage(imageFile);
+      }
+
+      await Promise.all([
+        apiFetch("/api/v1/home/", {
+          method: "POST",
+          body: JSON.stringify({
             title,
             description,
             location,
             report_type: reportType,
-            image_url: imageUrl || null,
+            image_url: uploadedImageUrl,
             given_back: false,
+          }),
         }),
-        });
+        new Promise((resolve) => setTimeout(resolve, 1500)),
+      ]);
 
     setIsError(false);
     setMessage("Post created successfully. Redirecting to homepage...");
@@ -205,23 +261,35 @@ export default function CreatePostPage() {
 
               <div>
                 <label
-                  htmlFor="imageUrl"
+                  htmlFor="image"
                   className="block font-heading text-sm font-semibold text-gray-800"
                 >
-                  Image URL Optional
+                  Image (Optional)
                 </label>
 
                 <input
-                  id="imageUrl"
-                  name="imageUrl"
-                  type="url"
-                  placeholder="Image upload will be added later"
-                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  id="image"
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleImageChange}
+                  className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-[#C8102E] file:px-4 file:py-2 file:font-heading file:text-sm file:font-semibold file:text-white hover:file:bg-[#a00d24]"
                 />
 
+                {imagePreview && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={imagePreview}
+                    alt="Selected preview"
+                    className="mt-3 h-48 w-full rounded-md border border-gray-200 object-cover"
+                  />
+                )}
+
+                {imageError && (
+                  <p className="mt-2 text-xs text-red-700">{imageError}</p>
+                )}
+
                 <p className="mt-2 text-xs leading-5 text-gray-500">
-                  For now, image upload is not connected. You can leave this
-                  empty.
+                  JPEG, PNG, GIF, or WebP up to 5 MB.
                 </p>
               </div>
 
@@ -242,6 +310,7 @@ export default function CreatePostPage() {
                 disabled={isSubmitting}
                 className="w-full bg-[#C8102E] py-6 font-heading text-base font-bold text-white hover:bg-[#a00d24]"
               >
+                {isSubmitting && <Spinner className="size-5 text-white" />}
                 {isSubmitting ? "Creating Post..." : "Create Post"}
               </Button>
             </form>

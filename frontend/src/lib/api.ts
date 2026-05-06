@@ -43,16 +43,49 @@ export function getApiErrorMessage(error: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
+async function tryRefreshToken(): Promise<boolean> {
+  if (globalThis.window === undefined) return false;
+
+  const refreshToken = localStorage.getItem("refresh_token");
+  if (!refreshToken) return false;
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/v1/token/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    });
+
+    if (!response.ok) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("refresh_token");
+      return false;
+    }
+
+    const data: { token: string; refresh_token: string } = await response.json();
+    localStorage.setItem("token", data.token);
+    localStorage.setItem("refresh_token", data.refresh_token);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {},
+  _isRetry = false,
 ): Promise<T> {
   const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    globalThis.window === undefined ? null : localStorage.getItem("token");
 
   const headers = new Headers(options.headers);
 
-  if (options.body && !headers.has("Content-Type")) {
+  if (
+    options.body &&
+    !headers.has("Content-Type") &&
+    !(options.body instanceof FormData)
+  ) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -64,6 +97,17 @@ export async function apiFetch<T>(
     ...options,
     headers,
   });
+
+  if (
+    response.status === 401 &&
+    !_isRetry &&
+    path !== "/api/v1/token/refresh"
+  ) {
+    const refreshed = await tryRefreshToken();
+    if (refreshed) {
+      return apiFetch<T>(path, options, true);
+    }
+  }
 
   const contentType = response.headers.get("content-type");
 
@@ -77,6 +121,19 @@ export async function apiFetch<T>(
 
   return data as T;
 }
+
+export async function uploadImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const { url } = await apiFetch<{ url: string }>("/api/v1/uploads/image", {
+    method: "POST",
+    body: formData,
+  });
+
+  return url.startsWith("/") ? `${API_BASE_URL}${url}` : url;
+}
+
 // Conversation API types
 
 export type ConversationListItem = {

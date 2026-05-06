@@ -1,6 +1,9 @@
 # src/app/main.py
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1.routes import api_router
 from app.core.db import Base, engine
@@ -9,6 +12,10 @@ from app.core.settings import settings
 # Create database tables if they do not exist
 Base.metadata.create_all(bind=engine)
 
+# Ensure the uploads directory exists before mounting it.
+upload_dir = Path(settings.upload_dir)
+upload_dir.mkdir(parents=True, exist_ok=True)
+
 app = FastAPI(
     title=settings.app_name,
     description="A web application for reporting, searching, and recovering lost items on campus.",
@@ -16,6 +23,7 @@ app = FastAPI(
 )
 
 app.include_router(api_router)
+app.mount("/uploads", StaticFiles(directory=upload_dir), name="uploads")
 
 # Configure CORS
 app.add_middleware(
