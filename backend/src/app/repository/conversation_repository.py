@@ -29,8 +29,13 @@ class ConversationRepository:
         )
 
     @staticmethod
-    def create(db: Session, user_id1: int, user_id2: int) -> Conversation:
-        convo = Conversation(user_id1=user_id1, user_id2=user_id2)
+    def create(
+        db: Session,
+        user_id1: int,
+        user_id2: int,
+        item_id: int | None = None,
+    ) -> Conversation:
+        convo = Conversation(user_id1=user_id1, user_id2=user_id2, item_id=item_id)
         db.add(convo)
         db.commit()
         db.refresh(convo)

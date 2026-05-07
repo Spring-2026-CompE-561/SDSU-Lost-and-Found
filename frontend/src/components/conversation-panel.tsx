@@ -2,11 +2,19 @@
 
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { Inbox, MessageCircle, Send, X } from "lucide-react";
+import { Inbox, MessageCircle, MoreHorizontal, Send, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ConversationListItem,
   MessageListItem,
+  deleteConversation,
+  deleteMessage,
   getApiErrorMessage,
   getConversationMessages,
   getConversations,
@@ -127,6 +135,47 @@ export default function ConversationPanel({
     setErrorMessage("");
   }
 
+  async function handleDeleteConversation(conversationId: number) {
+    const shouldDelete = globalThis.confirm(
+      "Delete this conversation? This cannot be undone.",
+    );
+
+    if (!shouldDelete) return;
+
+    try {
+      setErrorMessage("");
+      await deleteConversation(conversationId);
+
+      setConversations((current) =>
+        current.filter((conversation) => conversation.id !== conversationId),
+      );
+
+      if (selectedConversationId === conversationId) {
+        setSelectedConversationId(null);
+        setMessages([]);
+      }
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error));
+    }
+  }
+
+  async function handleDeleteMessage(messageId: number) {
+    const shouldDelete = globalThis.confirm("Delete this message?");
+
+    if (!shouldDelete) return;
+
+    try {
+      setErrorMessage("");
+      await deleteMessage(messageId);
+
+      setMessages((current) =>
+        current.filter((message) => message.id !== messageId),
+      );
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error));
+    }
+  }
+
   async function handleSendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -165,6 +214,24 @@ export default function ConversationPanel({
     return () => window.clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
+
+  useEffect(() => {
+    function handleSignOut() {
+      setIsSignedIn(false);
+      setCurrentUserId(null);
+      setConversations([]);
+      setSelectedConversationId(null);
+      setMessages([]);
+      setNewMessage("");
+      setErrorMessage("");
+      setIsLoadingConversations(false);
+      setIsLoadingMessages(false);
+    }
+
+    globalThis.addEventListener("auth:signout", handleSignOut);
+
+    return () => globalThis.removeEventListener("auth:signout", handleSignOut);
+  }, []);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -270,11 +337,13 @@ export default function ConversationPanel({
         <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
           <div>
             <h3 className="font-heading text-sm font-bold text-gray-900">
-              {selectedConversation.partner_name}
+              {selectedConversation.item_title ?? selectedConversation.partner_name}
             </h3>
 
             <p className="mt-1 text-xs text-gray-500">
-              Active conversation
+              {selectedConversation.item_title
+                ? selectedConversation.partner_name
+                : "Active conversation"}
             </p>
           </div>
 
@@ -308,10 +377,34 @@ export default function ConversationPanel({
               return (
                 <div
                   key={message.id}
-                  className={`flex ${
+                  className={`group flex items-start gap-1 ${
                     isMine ? "justify-end" : "justify-start"
                   }`}
                 >
+                  {isMine && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          type="button"
+                          className="mt-1 rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-700 group-hover:opacity-100 data-[state=open]:opacity-100"
+                          aria-label="Message actions"
+                        >
+                          <MoreHorizontal size={14} />
+                        </button>
+                      </DropdownMenuTrigger>
+
+                      <DropdownMenuContent align="end" className="w-44">
+                        <DropdownMenuItem
+                          variant="destructive"
+                          onClick={() => handleDeleteMessage(message.id)}
+                        >
+                          <Trash2 />
+                          Delete message
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+
                   <div
                     className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-5 ${
                       isMine
@@ -369,24 +462,56 @@ export default function ConversationPanel({
           const isSelected = conversation.id === selectedConversationId;
 
           return (
-            <button
+            <div
               key={conversation.id}
-              type="button"
-              onClick={() => setSelectedConversationId(conversation.id)}
-              className={`w-full rounded-lg border px-3 py-2.5 text-left transition-all duration-200 ${
+              className={`group relative rounded-lg border transition-all duration-200 ${
                 isSelected
                   ? "border-[#C8102E] bg-red-50 shadow-sm"
                   : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm"
               }`}
             >
-              <p className="font-heading text-sm font-bold text-gray-900">
-                {conversation.partner_name}
-              </p>
+              <button
+                type="button"
+                onClick={() => setSelectedConversationId(conversation.id)}
+                className="w-full rounded-lg px-3 py-2.5 pr-10 text-left"
+              >
+                <p className="font-heading text-sm font-bold text-gray-900">
+                  {conversation.item_title ?? conversation.partner_name}
+                </p>
 
-              <p className="mt-1 line-clamp-1 text-xs text-gray-500">
-                {conversation.last_message || "No messages yet"}
-              </p>
-            </button>
+                {conversation.item_title && (
+                  <p className="mt-0.5 text-xs font-medium text-gray-600">
+                    {conversation.partner_name}
+                  </p>
+                )}
+
+                <p className="mt-1 line-clamp-1 text-xs text-gray-500">
+                  {conversation.last_message || "No messages yet"}
+                </p>
+              </button>
+
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="absolute right-2 top-2 rounded-full p-1 text-gray-500 opacity-0 transition hover:bg-gray-200 hover:text-gray-900 group-hover:opacity-100 data-[state=open]:opacity-100"
+                    aria-label="Conversation actions"
+                  >
+                    <MoreHorizontal size={16} />
+                  </button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    variant="destructive"
+                    onClick={() => handleDeleteConversation(conversation.id)}
+                  >
+                    <Trash2 />
+                    Delete conversation
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           );
         })}
       </div>

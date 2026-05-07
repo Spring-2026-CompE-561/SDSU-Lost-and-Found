@@ -8,7 +8,7 @@ import PostCard from "@/components/post-card";
 import ConversationPanel from "@/components/conversation-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Search } from "lucide-react";
+import { Plus, PlusCircle, Search } from "lucide-react";
 import { apiFetch, createConversation, getApiErrorMessage } from "@/lib/api";
 
 type ItemPost = {
@@ -110,7 +110,7 @@ export default function Home() {
     setDateRange("");
   }
 
-  async function handleMessageAboutItem(ownerUserId: number) {
+  async function handleMessageAboutItem(ownerUserId: number, itemId: number) {
     const token = localStorage.getItem("token");
     const storedUserId = localStorage.getItem("userId");
     const currentUserId = storedUserId ? Number(storedUserId) : null;
@@ -128,7 +128,7 @@ export default function Home() {
     try {
       setMessageActionError("");
 
-      const conversation = await createConversation(ownerUserId);
+      const conversation = await createConversation(ownerUserId, itemId);
 
       setActiveConversationId(conversation.id);
       setConversationRefreshKey((currentKey) => currentKey + 1);
@@ -149,14 +149,23 @@ export default function Home() {
 
       {/* Search Bar */}
       <div className="mx-auto max-w-7xl px-4 pb-2 pt-5">
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-          <Input
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search by title, description, or location..."
-            className="rounded-md border border-gray-300 bg-white pl-9"
-          />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by title, description, or location..."
+              className="rounded-md border border-gray-300 bg-white pl-9"
+            />
+          </div>
+
+          <Link href="/create-post" className="shrink-0">
+            <Button className="w-full bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] sm:w-auto">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Post
+            </Button>
+          </Link>
         </div>
       </div>
 

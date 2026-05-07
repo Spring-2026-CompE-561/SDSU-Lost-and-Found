@@ -59,6 +59,8 @@ export default function Navbar() {
     setUserName("");
     setMenuOpen(false);
 
+    globalThis.dispatchEvent(new Event("auth:signout"));
+
     router.push("/");
   }
 

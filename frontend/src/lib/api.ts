@@ -141,11 +141,14 @@ export type ConversationListItem = {
   partner_id: number;
   partner_name: string;
   last_message: string | null;
+  item_id: number | null;
+  item_title: string | null;
 };
 
 export type ConversationOut = {
   id: number;
   participant_ids: number[];
+  item_id: number | null;
 };
 
 export type MessageListItem = {
@@ -175,11 +178,12 @@ export function getConversations(limit = 50, offset = 0) {
   );
 }
 
-export function createConversation(recipientId: number) {
+export function createConversation(recipientId: number, itemId?: number) {
   return apiFetch<ConversationOut>("/api/v1/conversations/", {
     method: "POST",
     body: JSON.stringify({
       recipient_id: recipientId,
+      item_id: itemId ?? null,
     }),
   });
 }

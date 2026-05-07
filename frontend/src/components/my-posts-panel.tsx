@@ -1,18 +1,28 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { apiFetch, getApiErrorMessage } from "@/lib/api";
+import { apiFetch, getApiErrorMessage, uploadImage } from "@/lib/api";
 import {
   CheckCircle2,
   MapPin,
   PackageOpen,
   Pencil,
+  Plus,
   RotateCcw,
   Trash2,
   X,
 } from "lucide-react";
+
+const ACCEPTED_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+  "image/webp",
+]);
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 type ItemPost = {
   id: number;
@@ -39,6 +49,7 @@ function formatDate(date: string) {
 }
 
 export default function MyPostsPanel() {
+  const router = useRouter();
   const [posts, setPosts] = useState<ItemPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionPostId, setActionPostId] = useState<number | null>(null);
@@ -53,7 +64,54 @@ export default function MyPostsPanel() {
     "lost",
   );
   const [editImageUrl, setEditImageUrl] = useState("");
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
+  const [editImagePreview, setEditImagePreview] = useState<string | null>(null);
+  const [editImageError, setEditImageError] = useState<string | null>(null);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  useEffect(() => {
+    if (!editImagePreview) return;
+
+    return () => URL.revokeObjectURL(editImagePreview);
+  }, [editImagePreview]);
+
+  function handleEditImageChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0] ?? null;
+
+    setEditImageError(null);
+
+    if (!file) {
+      setEditImageFile(null);
+      setEditImagePreview(null);
+      return;
+    }
+
+    if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
+      setEditImageError("Use JPEG, PNG, GIF, or WebP.");
+      setEditImageFile(null);
+      setEditImagePreview(null);
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE_BYTES) {
+      setEditImageError("Image must be 5 MB or smaller.");
+      setEditImageFile(null);
+      setEditImagePreview(null);
+      event.target.value = "";
+      return;
+    }
+
+    setEditImageFile(file);
+    setEditImagePreview(URL.createObjectURL(file));
+  }
+
+  function handleRemoveEditImage() {
+    setEditImageFile(null);
+    setEditImagePreview(null);
+    setEditImageUrl("");
+    setEditImageError(null);
+  }
 
   async function loadMyPosts() {
     try {
@@ -78,7 +136,10 @@ export default function MyPostsPanel() {
     setEditDescription(post.description);
     setEditLocation(post.location);
     setEditReportType(post.report_type);
-    setEditImageUrl(post.image_url || "");
+    setEditImageUrl(post.image_url ?? "");
+    setEditImageFile(null);
+    setEditImagePreview(null);
+    setEditImageError(null);
     setMessage("");
     setIsError(false);
   }
@@ -90,6 +151,9 @@ export default function MyPostsPanel() {
     setEditLocation("");
     setEditReportType("lost");
     setEditImageUrl("");
+    setEditImageFile(null);
+    setEditImagePreview(null);
+    setEditImageError(null);
     setIsSavingEdit(false);
   }
 
@@ -103,7 +167,6 @@ export default function MyPostsPanel() {
     const trimmedTitle = editTitle.trim();
     const trimmedDescription = editDescription.trim();
     const trimmedLocation = editLocation.trim();
-    const trimmedImageUrl = editImageUrl.trim();
 
     if (!trimmedTitle || !trimmedDescription || !trimmedLocation) {
       setIsError(true);
@@ -116,6 +179,11 @@ export default function MyPostsPanel() {
       setMessage("");
       setIsError(false);
 
+      let nextImageUrl: string | null = editImageUrl.trim() || null;
+      if (editImageFile) {
+        nextImageUrl = await uploadImage(editImageFile);
+      }
+
       await apiFetch<SuccessResponse>(`/api/v1/home/${editingPost.id}`, {
         method: "PUT",
         body: JSON.stringify({
@@ -123,7 +191,7 @@ export default function MyPostsPanel() {
           description: trimmedDescription,
           location: trimmedLocation,
           report_type: editReportType,
-          image_url: trimmedImageUrl || null,
+          image_url: nextImageUrl,
         }),
       });
 
@@ -136,7 +204,7 @@ export default function MyPostsPanel() {
                 description: trimmedDescription,
                 location: trimmedLocation,
                 report_type: editReportType,
-                image_url: trimmedImageUrl || null,
+                image_url: nextImageUrl,
               }
             : currentPost,
         ),
@@ -238,10 +306,11 @@ export default function MyPostsPanel() {
 
           <Button
             type="button"
-            onClick={loadMyPosts}
-            className="bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24]"
+            onClick={() => router.push("/create-post")}
+            aria-label="Create a new post"
+            className="h-11 w-11 rounded-full bg-[#C8102E] p-0 text-white hover:bg-[#a00d24]"
           >
-            Refresh
+            <Plus className="h-6 w-6" />
           </Button>
         </div>
 
@@ -480,20 +549,46 @@ export default function MyPostsPanel() {
 
               <div>
                 <label
-                  htmlFor="editImageUrl"
+                  htmlFor="editImage"
                   className="block font-heading text-sm font-semibold text-gray-800"
                 >
-                  Image URL Optional
+                  Image (Optional)
                 </label>
 
                 <input
-                  id="editImageUrl"
-                  type="url"
-                  value={editImageUrl}
-                  onChange={(event) => setEditImageUrl(event.target.value)}
-                  placeholder="Leave empty to remove the image URL"
-                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  id="editImage"
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  onChange={handleEditImageChange}
+                  className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-[#C8102E] file:px-4 file:py-2 file:font-heading file:text-sm file:font-semibold file:text-white hover:file:bg-[#a00d24]"
                 />
+
+                {(editImagePreview || editImageUrl) && (
+                  <div className="mt-3 flex items-start gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={editImagePreview ?? editImageUrl}
+                      alt="Selected preview"
+                      className="h-32 w-32 rounded-md border border-gray-200 object-cover"
+                    />
+
+                    <button
+                      type="button"
+                      onClick={handleRemoveEditImage}
+                      className="font-heading text-xs font-semibold text-red-700 underline hover:text-red-900"
+                    >
+                      Remove image
+                    </button>
+                  </div>
+                )}
+
+                {editImageError && (
+                  <p className="mt-2 text-xs text-red-700">{editImageError}</p>
+                )}
+
+                <p className="mt-2 text-xs leading-5 text-gray-500">
+                  JPEG, PNG, GIF, or WebP up to 5 MB.
+                </p>
               </div>
 
               <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
