@@ -40,6 +40,7 @@ def create_conversation(
         db,
         current_user_id,
         body.recipient_id,
+        body.item_id,
     )
 
 

@@ -15,6 +15,6 @@ class Message(Base):
     message_text = Column(String, nullable=False)
     is_read = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
- 
+
     conversation = relationship("Conversation", back_populates="messages")
     sender = relationship("User", back_populates= "message_sent", foreign_keys=[sender_id])

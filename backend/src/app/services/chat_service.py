@@ -24,7 +24,7 @@ def get_messages(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Conversation not found or access denied.",
         )
- 
+
     messages = MessageRepository.list_by_conversation(db, conversation_id, limit, offset)
     return [
         MessageListItem(
@@ -85,5 +85,5 @@ def delete_message(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You can only delete your own messages.",
         )
- 
+
     MessageRepository.delete(db, message_id)
