@@ -40,9 +40,9 @@ def test_different_passwords_produce_different_hashes():
     assert h1 != h2
 
 
-# ---------------------------------------------------------------------------
+# ---
 # Access token
-# ---------------------------------------------------------------------------
+# ---
 
 def test_create_and_verify_access_token():
     data = {"sub": "42", "scope": "user"}
