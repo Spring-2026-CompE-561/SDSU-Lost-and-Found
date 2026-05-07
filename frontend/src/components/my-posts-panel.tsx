@@ -1,0 +1,523 @@
+"use client";
+
+import { FormEvent, useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { apiFetch, getApiErrorMessage } from "@/lib/api";
+import {
+  CheckCircle2,
+  MapPin,
+  PackageOpen,
+  Pencil,
+  RotateCcw,
+  Trash2,
+  X,
+} from "lucide-react";
+
+type ItemPost = {
+  id: number;
+  user_id: number;
+  title: string;
+  description: string;
+  location: string;
+  report_type: "lost" | "found";
+  image_url: string | null;
+  given_back: boolean;
+  created_at: string;
+};
+
+type SuccessResponse = {
+  success: boolean;
+};
+
+function formatDate(date: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(new Date(date));
+}
+
+export default function MyPostsPanel() {
+  const [posts, setPosts] = useState<ItemPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [actionPostId, setActionPostId] = useState<number | null>(null);
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
+
+  const [editingPost, setEditingPost] = useState<ItemPost | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editReportType, setEditReportType] = useState<"lost" | "found">(
+    "lost",
+  );
+  const [editImageUrl, setEditImageUrl] = useState("");
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  async function loadMyPosts() {
+    try {
+      setMessage("");
+      setIsError(false);
+      setIsLoading(true);
+
+      const data = await apiFetch<ItemPost[]>("/api/v1/home/my-posts");
+
+      setPosts(data);
+    } catch (error) {
+      setIsError(true);
+      setMessage(getApiErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  function openEditModal(post: ItemPost) {
+    setEditingPost(post);
+    setEditTitle(post.title);
+    setEditDescription(post.description);
+    setEditLocation(post.location);
+    setEditReportType(post.report_type);
+    setEditImageUrl(post.image_url || "");
+    setMessage("");
+    setIsError(false);
+  }
+
+  function closeEditModal() {
+    setEditingPost(null);
+    setEditTitle("");
+    setEditDescription("");
+    setEditLocation("");
+    setEditReportType("lost");
+    setEditImageUrl("");
+    setIsSavingEdit(false);
+  }
+
+  async function handleSaveEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editingPost) {
+      return;
+    }
+
+    const trimmedTitle = editTitle.trim();
+    const trimmedDescription = editDescription.trim();
+    const trimmedLocation = editLocation.trim();
+    const trimmedImageUrl = editImageUrl.trim();
+
+    if (!trimmedTitle || !trimmedDescription || !trimmedLocation) {
+      setIsError(true);
+      setMessage("Please fill out title, description, and location.");
+      return;
+    }
+
+    try {
+      setIsSavingEdit(true);
+      setMessage("");
+      setIsError(false);
+
+      await apiFetch<SuccessResponse>(`/api/v1/home/${editingPost.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          title: trimmedTitle,
+          description: trimmedDescription,
+          location: trimmedLocation,
+          report_type: editReportType,
+          image_url: trimmedImageUrl || null,
+        }),
+      });
+
+      setPosts((currentPosts) =>
+        currentPosts.map((currentPost) =>
+          currentPost.id === editingPost.id
+            ? {
+                ...currentPost,
+                title: trimmedTitle,
+                description: trimmedDescription,
+                location: trimmedLocation,
+                report_type: editReportType,
+                image_url: trimmedImageUrl || null,
+              }
+            : currentPost,
+        ),
+      );
+
+      closeEditModal();
+      setIsError(false);
+      setMessage("Post updated successfully.");
+    } catch (error) {
+      setIsError(true);
+      setMessage(getApiErrorMessage(error));
+    } finally {
+      setIsSavingEdit(false);
+    }
+  }
+
+  async function handleToggleReturned(post: ItemPost) {
+    try {
+      setActionPostId(post.id);
+      setMessage("");
+      setIsError(false);
+
+      await apiFetch<SuccessResponse>(`/api/v1/home/${post.id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          given_back: !post.given_back,
+        }),
+      });
+
+      setPosts((currentPosts) =>
+        currentPosts.map((currentPost) =>
+          currentPost.id === post.id
+            ? { ...currentPost, given_back: !currentPost.given_back }
+            : currentPost,
+        ),
+      );
+
+      setMessage(
+        post.given_back
+          ? "Post marked as active again. It will show on the home feed."
+          : "Post marked as returned. It will no longer show on the home feed.",
+      );
+    } catch (error) {
+      setIsError(true);
+      setMessage(getApiErrorMessage(error));
+    } finally {
+      setActionPostId(null);
+    }
+  }
+
+  async function handleDeletePost(postId: number) {
+    const shouldDelete = window.confirm(
+      "Are you sure you want to delete this post?",
+    );
+
+    if (!shouldDelete) {
+      return;
+    }
+
+    try {
+      setActionPostId(postId);
+      setMessage("");
+      setIsError(false);
+
+      await apiFetch<SuccessResponse>(`/api/v1/home/${postId}`, {
+        method: "DELETE",
+      });
+
+      setPosts((currentPosts) =>
+        currentPosts.filter((currentPost) => currentPost.id !== postId),
+      );
+
+      setMessage("Post deleted successfully.");
+    } catch (error) {
+      setIsError(true);
+      setMessage(getApiErrorMessage(error));
+    } finally {
+      setActionPostId(null);
+    }
+  }
+
+  useEffect(() => {
+    loadMyPosts();
+  }, []);
+
+  return (
+    <>
+      <section className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
+        <div className="flex flex-col gap-4 border-b border-gray-100 pb-6 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="font-heading text-2xl font-bold text-gray-900">
+              My Posts
+            </h2>
+
+            <p className="mt-2 text-sm text-gray-600">
+              Manage the lost and found posts created by your account.
+            </p>
+          </div>
+
+          <Button
+            type="button"
+            onClick={loadMyPosts}
+            className="bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24]"
+          >
+            Refresh
+          </Button>
+        </div>
+
+        {message && (
+          <p
+            className={`mt-5 rounded-md px-4 py-3 text-sm ${
+              isError ? "bg-red-50 text-red-800" : "bg-green-50 text-green-800"
+            }`}
+          >
+            {message}
+          </p>
+        )}
+
+        {isLoading && (
+          <div className="flex min-h-44 items-center justify-center text-center">
+            <p className="text-sm text-gray-600">Loading your posts...</p>
+          </div>
+        )}
+
+        {!isLoading && posts.length === 0 && (
+          <div className="flex min-h-52 items-center justify-center text-center">
+            <div>
+              <PackageOpen className="mx-auto h-12 w-12 text-[#C8102E]" />
+
+              <h3 className="mt-4 font-heading text-xl font-bold text-gray-900">
+                No posts yet
+              </h3>
+
+              <p className="mt-3 max-w-md text-sm leading-6 text-gray-600">
+                Once you create a lost or found item post, it will appear here so
+                you can manage it.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!isLoading && posts.length > 0 && (
+          <div className="mt-6 grid gap-5">
+            {posts.map((post) => {
+              const isLost = post.report_type === "lost";
+              const isBusy = actionPostId === post.id;
+
+              return (
+                <article
+                  key={post.id}
+                  className="rounded-xl border border-gray-200 bg-gray-50 p-5"
+                >
+                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-heading text-xl font-bold text-gray-900">
+                          {post.title}
+                        </h3>
+
+                        <Badge className="bg-[#C8102E] text-white">
+                          {isLost ? "Lost" : "Found"}
+                        </Badge>
+
+                        {post.given_back ? (
+                          <Badge className="bg-gray-800 text-white">
+                            Returned
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-blue-600 text-white">
+                            Active
+                          </Badge>
+                        )}
+                      </div>
+
+                      <p className="mt-2 flex items-center gap-1 text-xs text-gray-500">
+                        <MapPin size={14} />
+                        {post.location} · {formatDate(post.created_at)}
+                      </p>
+
+                      <p className="mt-4 text-sm leading-6 text-gray-700">
+                        {post.description}
+                      </p>
+                    </div>
+
+                    {post.image_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={post.image_url}
+                        alt={post.title}
+                        className="h-28 w-full rounded-lg object-cover md:w-36"
+                      />
+                    )}
+                  </div>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <Button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => handleToggleReturned(post)}
+                      className="bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {post.given_back ? (
+                        <>
+                          <RotateCcw className="mr-2 h-4 w-4" />
+                          Mark Active
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          Mark Returned
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => openEditModal(post)}
+                      className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit Post
+                    </Button>
+
+                    <Button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => handleDeletePost(post.id)}
+                      className="border border-red-200 bg-white font-heading font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Post
+                    </Button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {editingPost && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-6 md:items-center">
+          <div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-xl">
+            <div className="modal-scrollbar mr-2 max-h-[90vh] overflow-y-auto p-5 pr-7">
+              <div className="flex items-start justify-between border-b border-gray-100 pb-4">
+              <div>
+                <h2 className="font-heading text-2xl font-bold text-gray-900">
+                  Edit Post
+                </h2>
+
+                <p className="mt-1 text-sm text-gray-600">
+                  Update the item information below.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeEditModal}
+                className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                aria-label="Close edit post modal"
+              >
+                <X size={22} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="mt-5 space-y-4">
+              <div>
+                <label
+                  htmlFor="editReportType"
+                  className="block font-heading text-sm font-semibold text-gray-800"
+                >
+                  Report Type
+                </label>
+
+                <select
+                  id="editReportType"
+                  value={editReportType}
+                  onChange={(event) =>
+                    setEditReportType(event.target.value as "lost" | "found")
+                  }
+                  className="mt-2 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                >
+                  <option value="lost">Lost Item</option>
+                  <option value="found">Found Item</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="editTitle"
+                  className="block font-heading text-sm font-semibold text-gray-800"
+                >
+                  Item Title
+                </label>
+
+                <input
+                  id="editTitle"
+                  type="text"
+                  value={editTitle}
+                  onChange={(event) => setEditTitle(event.target.value)}
+                  maxLength={255}
+                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="editDescription"
+                  className="block font-heading text-sm font-semibold text-gray-800"
+                >
+                  Description
+                </label>
+
+                <textarea
+                  id="editDescription"
+                  value={editDescription}
+                  onChange={(event) => setEditDescription(event.target.value)}
+                  rows={3}
+                  className="mt-2 w-full resize-none rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="editLocation"
+                  className="block font-heading text-sm font-semibold text-gray-800"
+                >
+                  Location
+                </label>
+
+                <input
+                  id="editLocation"
+                  type="text"
+                  value={editLocation}
+                  onChange={(event) => setEditLocation(event.target.value)}
+                  maxLength={255}
+                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="editImageUrl"
+                  className="block font-heading text-sm font-semibold text-gray-800"
+                >
+                  Image URL Optional
+                </label>
+
+                <input
+                  id="editImageUrl"
+                  type="url"
+                  value={editImageUrl}
+                  onChange={(event) => setEditImageUrl(event.target.value)}
+                  placeholder="Leave empty to remove the image URL"
+                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                />
+              </div>
+
+              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+                <Button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100"
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  className="bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isSavingEdit ? "Saving..." : "Save Changes"}
+                </Button>
+              </div>
+            </form>
+          </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+}
