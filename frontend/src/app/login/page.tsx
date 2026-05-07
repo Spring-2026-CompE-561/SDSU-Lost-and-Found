@@ -25,10 +25,18 @@ function LoginContent() {
   const searchParams = useSearchParams();
 
   const redirectTo = searchParams.get("redirect") || "/";
+
+  const SIGN_IN_MESSAGES: Record<string, string> = {
+    "signin-required": "Please sign in to continue.",
+    "signin-required-create-post":
+      "Please sign in before creating a lost or found post.",
+    "signin-required-message": "Please sign in to message about an item.",
+    "signin-required-messages": "Please sign in to view your messages.",
+    "signin-required-account": "Please sign in to access your account.",
+  };
+
   const initialMessage =
-    searchParams.get("message") === "signin-required"
-      ? "Please sign in before creating a lost or found post."
-      : "";
+    SIGN_IN_MESSAGES[searchParams.get("message") ?? ""] ?? "";
 
   const [message, setMessage] = useState(initialMessage);
   const [isError, setIsError] = useState(Boolean(initialMessage));

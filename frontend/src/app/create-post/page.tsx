@@ -29,7 +29,7 @@ export default function CreatePostPage() {
     const token = localStorage.getItem("token");
 
     if(!token) {
-        router.replace("/login?message=signin-required&redirect=/create-post");
+        router.replace("/login?message=signin-required-create-post&redirect=/create-post");
     }
 }, [router]);
 
@@ -80,7 +80,7 @@ export default function CreatePostPage() {
     const token = localStorage.getItem("token");
 
     if (!token) {
-      router.replace("/login?message=signin-required&redirect=/create-post");
+      router.replace("/login?message=signin-required-create-post&redirect=/create-post");
       return;
     }
 

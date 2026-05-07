@@ -275,7 +275,7 @@ export default function ConversationPanel({
               items.
             </p>
 
-            <Link href="/login?message=signin-required&redirect=/">
+            <Link href="/login?message=signin-required-messages&redirect=/">
               <Button className="mt-6 bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24]">
                 Sign In
               </Button>

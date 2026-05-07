@@ -116,7 +116,7 @@ export default function Home() {
     const currentUserId = storedUserId ? Number(storedUserId) : null;
 
     if (!token) {
-      router.push("/login?message=signin-required&redirect=/");
+      router.push("/login?message=signin-required-message&redirect=/");
       return;
     }
 

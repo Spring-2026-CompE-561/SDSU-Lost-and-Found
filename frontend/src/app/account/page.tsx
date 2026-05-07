@@ -39,14 +39,14 @@ export default function AccountPage() {
       const storedUserId = localStorage.getItem("userId");
 
       if (!token || !storedUserId) {
-        router.replace("/login?message=signin-required&redirect=/account");
+        router.replace("/login?message=signin-required-account&redirect=/account");
         return;
       }
 
       const parsedUserId = Number(storedUserId);
 
       if (Number.isNaN(parsedUserId)) {
-        router.replace("/login?message=signin-required&redirect=/account");
+        router.replace("/login?message=signin-required-account&redirect=/account");
         return;
       }
 
