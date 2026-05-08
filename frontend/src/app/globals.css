@@ -140,6 +140,10 @@
   border: 4px solid white;
 }
 
+.dark .modal-scrollbar::-webkit-scrollbar-thumb {
+  border-color: #1f2937;
+}
+
 .modal-scrollbar::-webkit-scrollbar-thumb:hover {
   background-color: #6b7280;
 }
@@ -162,6 +166,10 @@
   background-color: #9ca3af;
   border-radius: 9999px;
   border: 3px solid white;
+}
+
+.dark .message-panel-scrollbar::-webkit-scrollbar-thumb {
+  border-color: #1f2937;
 }
 
 .message-panel-scrollbar::-webkit-scrollbar-thumb:hover {

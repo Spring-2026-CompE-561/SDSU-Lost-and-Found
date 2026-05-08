@@ -99,10 +99,10 @@ function LoginContent() {
 }
 
   return (
-    <main className="min-h-screen bg-white text-black">
+    <main className="min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white">
       <Navbar />
 
-      <section className="bg-[#f4f4f4] px-6 py-20 md:px-16">
+      <section className="bg-[#f4f4f4] px-6 py-20 dark:bg-gray-800 md:px-16">
         <div className="mx-auto max-w-5xl">
           <h1 className="font-heading text-5xl font-semibold tracking-tight md:text-6xl">
             Sign In
@@ -110,7 +110,7 @@ function LoginContent() {
 
           <div className="mt-6 h-[2px] w-28 bg-[#C8102E]" />
 
-          <p className="mt-8 max-w-2xl text-xl leading-8 text-gray-700">
+          <p className="mt-8 max-w-2xl text-xl leading-8 text-gray-700 dark:text-gray-300">
             Sign in to your SDSU Lost & Found account to manage your posts,
             view updates, and communicate with campus members.
           </p>
@@ -120,16 +120,16 @@ function LoginContent() {
       <section className="px-6 py-16 md:px-16">
         <div className="mx-auto grid max-w-5xl items-start gap-10 md:grid-cols-[1fr_430px]">
           <div>
-            <h2 className="font-heading text-3xl font-semibold text-gray-900">
+            <h2 className="font-heading text-3xl font-semibold text-gray-900 dark:text-gray-100">
               Welcome Back
             </h2>
 
-            <p className="mt-5 text-lg leading-8 text-gray-700">
+            <p className="mt-5 text-lg leading-8 text-gray-700 dark:text-gray-300">
               Access your account to continue helping lost items find their way
               back to the right people.
             </p>
 
-            <div className="mt-8 space-y-4 text-gray-700">
+            <div className="mt-8 space-y-4 text-gray-700 dark:text-gray-300">
               <p>
                 <span className="font-semibold text-[#C8102E]">•</span> Manage
                 your lost and found posts.
@@ -147,8 +147,8 @@ function LoginContent() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-            <h2 className="font-heading text-2xl font-bold text-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="font-heading text-2xl font-bold text-gray-900 dark:text-gray-100">
               Account Login
             </h2>
 
@@ -156,7 +156,7 @@ function LoginContent() {
               <div>
                 <label
                   htmlFor="email"
-                  className="block font-heading text-sm font-semibold text-gray-800"
+                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
                 >
                   SDSU Email
                 </label>
@@ -166,14 +166,14 @@ function LoginContent() {
                   name="email"
                   type="email"
                   placeholder="name@sdsu.edu"
-                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  className="mt-2 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="password"
-                  className="block font-heading text-sm font-semibold text-gray-800"
+                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
                 >
                   Password
                 </label>
@@ -183,7 +183,7 @@ function LoginContent() {
                   name="password"
                   type="password"
                   placeholder="Enter your password"
-                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  className="mt-2 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
                 />
               </div>
 
@@ -208,7 +208,7 @@ function LoginContent() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-gray-600">
+            <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-300">
               Don&apos;t have an account?{" "}
               <Link
                 href="/create-account"
