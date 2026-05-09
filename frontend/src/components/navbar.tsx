@@ -1,51 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { Moon, Sun } from "lucide-react";
 
 function getStoredUserName() {
-  if (typeof window === "undefined") {
-    return "";
-  }
-
+  if (typeof window === "undefined") return "";
   const token = localStorage.getItem("token");
+  if (!token) return "";
   const firstName = localStorage.getItem("firstName");
   const lastName = localStorage.getItem("lastName");
   const email = localStorage.getItem("email");
-
-  if (!token) {
-    return "";
-  }
-
   const fullName = `${firstName || ""} ${lastName || ""}`.trim();
-
-  if (fullName) {
-    return fullName;
-  }
-
-  if (email) {
-    return email;
-  }
-
-  return "Signed in";
+  return fullName || email || "Signed in";
 }
 
 export default function Navbar() {
   const router = useRouter();
-
-  const [menuOpen, setMenuOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const [isDark, setIsDark] = useState(false);
 
-  const isSignedIn = userName.length > 0;
-  
-  function openMenu() {
-  setUserName(getStoredUserName());
-  setMenuOpen(true);
-}
-  function closeMenu() {
-    setMenuOpen(false);
+  useEffect(() => {
+    setUserName(getStoredUserName());
+    setIsDark(document.documentElement.classList.contains("dark"));
+
+    function handleSignOut() {
+      setUserName("");
+    }
+
+    globalThis.addEventListener("auth:signout", handleSignOut);
+    return () => globalThis.removeEventListener("auth:signout", handleSignOut);
+  }, []);
+
+  function toggleDarkMode() {
+    const html = document.documentElement;
+    const newDark = !html.classList.contains("dark");
+    html.classList.toggle("dark", newDark);
+    localStorage.setItem("theme", newDark ? "dark" : "light");
+    setIsDark(newDark);
   }
 
   function handleSignOut() {
@@ -55,99 +49,66 @@ export default function Navbar() {
     localStorage.removeItem("firstName");
     localStorage.removeItem("lastName");
     localStorage.removeItem("email");
-
     setUserName("");
-    setMenuOpen(false);
-
     globalThis.dispatchEvent(new Event("auth:signout"));
-
     router.push("/");
   }
 
+  const isSignedIn = userName.length > 0;
+
   return (
-    <>
-      <nav className="w-full bg-white border-b border-gray-200 shadow-sm">
-        <div className="w-full px-6 py-3 md:px-10 flex items-center justify-between">
-          {/* Left — SDSU Lost & Found branding */}
-          <Link href="/" className="flex items-center">
+    <nav className="w-full border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">
+        {/* Logo */}
+        <Link href="/" className="flex shrink-0 items-center">
+          <span className="rounded-md dark:bg-white dark:px-2 dark:py-1">
             <Image
               src="/logo.png"
               alt="SDSU Lost & Found Logo"
-              width={300}
-              height={64}
+              width={220}
+              height={48}
               loading="eager"
               style={{ height: "auto" }}
             />
+          </span>
+        </Link>
+
+        {/* Nav links + dark mode toggle */}
+        <div className="flex items-center gap-1 font-heading text-sm font-semibold sm:gap-3">
+          <Link
+            href="/"
+            className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] sm:inline"
+          >
+            Home
           </Link>
 
-          {/* Right — SDSU-style menu button */}
-          <button
-            onClick={openMenu}
-            className="flex items-center gap-3 font-heading font-semibold text-gray-900 transition-colors hover:text-[#C8102E]"
-            aria-label="Open navigation menu"
+          <Link
+            href="/create-post"
+            className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] md:inline"
           >
-            <span className="hidden sm:inline">Menu</span>
+            Create Post
+          </Link>
 
-            {/* Three dashes icon */}
-            <span className="flex flex-col gap-1">
-              <span className="h-0.5 w-7 rounded bg-current" />
-              <span className="h-0.5 w-7 rounded bg-current" />
-              <span className="h-0.5 w-7 rounded bg-current" />
-            </span>
-          </button>
-        </div>
-      </nav>
-
-      {/* Dark overlay */}
-      {menuOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/60"
-          onClick={closeMenu}
-        />
-      )}
-
-      {/* Side menu */}
-      <aside
-        className={`fixed right-0 top-0 z-50 h-full w-full transform bg-[#971B2F] text-white transition-transform duration-300 ease-in-out sm:w-[420px] ${
-          menuOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {/* Menu header */}
-        <div className="flex items-start justify-between border-b border-white/20 px-8 pb-8 pt-10">
-          <div>
-            <h2 className="font-heading text-2xl font-bold tracking-tight">
-              SDSU Lost & Found
-            </h2>
-
-            {isSignedIn && (
-              <p className="mt-2 font-heading text-base font-semibold text-white/85">
-                {userName}
-              </p>
-            )}
-          </div>
-
-          <button
-            onClick={closeMenu}
-            className="text-4xl leading-none transition hover:opacity-80"
-            aria-label="Close navigation menu"
+          <Link
+            href="/about"
+            className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] md:inline"
           >
-            ×
-          </button>
-        </div>
+            About
+          </Link>
 
-        {/* Top quick actions */}
-        <div className="font-heading flex justify-between gap-4 bg-white px-8 py-5 font-bold text-[#971B2F]">
           {isSignedIn ? (
             <>
               <Link
                 href="/account"
-                onClick={closeMenu}
-                className="hover:underline"
+                className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] sm:inline"
               >
                 My Account
               </Link>
 
-              <button onClick={handleSignOut} className="hover:underline">
+              <button
+                onClick={handleSignOut}
+                className="rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060]"
+              >
                 Sign Out
               </button>
             </>
@@ -155,46 +116,30 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                onClick={closeMenu}
-                className="hover:underline"
+                className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] sm:inline"
               >
                 Sign In
               </Link>
 
               <Link
                 href="/create-account"
-                onClick={closeMenu}
-                className="hover:underline"
+                className="hidden items-center rounded-md bg-[#C8102E] px-3 py-1.5 text-white transition-colors hover:bg-[#a00d24] md:inline-flex"
               >
                 Create Account
               </Link>
             </>
           )}
-        </div>
 
-        {/* Main menu links */}
-        <div className="font-heading flex flex-col gap-8 px-10 py-10 text-2xl font-bold tracking-tight">
-          <Link href="/" onClick={closeMenu} className="hover:opacity-80">
-            Home
-          </Link>
-
-          <Link
-            href="/create-post"
-            onClick={closeMenu}
-            className="hover:opacity-80"
+          {/* Dark mode toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="ml-1 flex h-8 w-8 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+            aria-label="Toggle dark mode"
           >
-            Create Lost/Found Post
-          </Link>
-
-          <Link
-            href="/about"
-            onClick={closeMenu}
-            className="hover:opacity-80"
-          >
-            About SDSU Lost & Found
-          </Link>
+            {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
         </div>
-      </aside>
-    </>
+      </div>
+    </nav>
   );
 }

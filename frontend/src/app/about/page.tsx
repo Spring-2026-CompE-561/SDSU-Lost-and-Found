@@ -37,10 +37,10 @@ const features = [
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen bg-white text-black">
+    <main className="min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white">
       <Navbar />
 
-      <section className="bg-[#f4f4f4] px-6 py-20 md:px-16">
+      <section className="bg-[#f4f4f4] px-6 py-20 dark:bg-gray-800 md:px-16">
         <div className="mx-auto max-w-5xl">
           <p className="font-heading text-sm font-bold uppercase tracking-[0.22em] text-[#C8102E]">
             About the project
@@ -52,7 +52,7 @@ export default function AboutPage() {
 
           <div className="mt-6 h-[2px] w-28 bg-[#C8102E]" />
 
-          <p className="mt-8 max-w-3xl text-xl leading-8 text-gray-700">
+          <p className="mt-8 max-w-3xl text-xl leading-8 text-gray-700 dark:text-gray-300">
             SDSU Lost &amp; Found is a campus web application that helps
             students, staff, and faculty report lost or found items, search
             existing posts, and communicate with each other to return belongings
@@ -70,17 +70,17 @@ export default function AboutPage() {
               return (
                 <article
                   key={feature.title}
-                  className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+                  className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-[#C8102E]">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-[#C8102E] dark:bg-red-900/30">
                     <Icon size={24} />
                   </div>
 
-                  <h2 className="mt-5 font-heading text-xl font-bold text-gray-900">
+                  <h2 className="mt-5 font-heading text-xl font-bold text-gray-900 dark:text-gray-100">
                     {feature.title}
                   </h2>
 
-                  <p className="mt-3 text-sm leading-6 text-gray-600">
+                  <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">
                     {feature.description}
                   </p>
                 </article>
@@ -90,30 +90,30 @@ export default function AboutPage() {
 
           <div className="mt-16 grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
             <section>
-              <h2 className="font-heading text-3xl font-bold text-gray-900">
+              <h2 className="font-heading text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Why this app matters
               </h2>
 
-              <p className="mt-5 text-lg leading-8 text-gray-700">
+              <p className="mt-5 text-lg leading-8 text-gray-700 dark:text-gray-300">
                 Lost items on campus are usually scattered across group chats,
                 front desks, classrooms, and word of mouth. This app centralizes
                 the process so users can post, search, and recover items from
                 one organized place.
               </p>
 
-              <p className="mt-5 text-lg leading-8 text-gray-700">
+              <p className="mt-5 text-lg leading-8 text-gray-700 dark:text-gray-300">
                 The platform also adds accountability by connecting posts to
                 user accounts and keeping item communication inside the app
                 through the messaging system.
               </p>
             </section>
 
-            <aside className="rounded-xl border border-gray-200 bg-gray-50 p-8">
-              <h3 className="font-heading text-2xl font-bold text-gray-900">
+            <aside className="rounded-xl border border-gray-200 bg-gray-50 p-8 dark:border-gray-700 dark:bg-gray-800">
+              <h3 className="font-heading text-2xl font-bold text-gray-900 dark:text-gray-100">
                 Current project stack
               </h3>
 
-              <ul className="mt-6 space-y-4 text-gray-700">
+              <ul className="mt-6 space-y-4 text-gray-700 dark:text-gray-300">
                 <li>
                   <span className="font-semibold text-[#C8102E]">•</span>{" "}
                   Frontend: Next.js, React, TypeScript, Tailwind CSS

@@ -246,18 +246,18 @@ export default function ConversationPanel({
   }, [selectedConversationId]);
 
   return (
-    <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <section className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
       <div className="message-panel-scrollbar mr-3 flex max-h-[calc(100vh-3rem)] min-h-[520px] flex-col overflow-y-auto p-5 pr-4">
-        <div className="flex items-center gap-3 border-b border-gray-100 pb-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-[#C8102E]">
+        <div className="flex items-center gap-3 border-b border-gray-100 pb-4 dark:border-gray-700">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-[#C8102E] dark:bg-red-900/30">
           <Inbox size={22} />
         </div>
 
         <div>
-          <h2 className="font-heading text-lg font-bold text-gray-900">
+          <h2 className="font-heading text-lg font-bold text-gray-900 dark:text-gray-100">
             Messages
           </h2>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Conversations about item recovery
           </p>
         </div>
@@ -266,11 +266,11 @@ export default function ConversationPanel({
       {!isSignedIn && !isLoadingConversations && (
         <div className="flex min-h-[420px] flex-1 items-center justify-center text-center">
           <div>
-            <h3 className="font-heading text-xl font-bold text-gray-900">
+            <h3 className="font-heading text-xl font-bold text-gray-900 dark:text-gray-100">
               Sign in to view messages
             </h3>
 
-            <p className="mt-3 max-w-xs text-sm leading-6 text-gray-600">
+            <p className="mt-3 max-w-xs text-sm leading-6 text-gray-600 dark:text-gray-300">
               You need an account to message other users about lost and found
               items.
             </p>
@@ -288,7 +288,7 @@ export default function ConversationPanel({
         <>
           {isLoadingConversations && (
             <div className="flex flex-1 items-center justify-center text-center">
-              <p className="text-sm text-gray-600">Loading conversations...</p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Loading conversations...</p>
             </div>
           )}
 
@@ -303,11 +303,11 @@ export default function ConversationPanel({
               <div>
                 <MessageCircle className="mx-auto h-10 w-10 text-[#C8102E]" />
 
-                <h3 className="mt-4 font-heading text-xl font-bold text-gray-900">
+                <h3 className="mt-4 font-heading text-xl font-bold text-gray-900 dark:text-gray-100">
                   No conversations yet
                 </h3>
 
-                <p className="mt-3 max-w-xs text-sm leading-6 text-gray-600">
+                <p className="mt-3 max-w-xs text-sm leading-6 text-gray-600 dark:text-gray-300">
                   When you message someone about an item, the conversation will
                   appear here.
                 </p>
@@ -319,28 +319,28 @@ export default function ConversationPanel({
   <div className="mt-5 space-y-5">
     {/* Top — Active chat */}
     {!selectedConversationId && (
-      <div className="animate-chat-panel-in rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center">
+      <div className="animate-chat-panel-in rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center dark:border-gray-600 dark:bg-gray-700/50">
         <MessageCircle className="mx-auto h-10 w-10 text-[#C8102E]" />
 
-        <h3 className="mt-4 font-heading text-lg font-bold text-gray-900">
+        <h3 className="mt-4 font-heading text-lg font-bold text-gray-900 dark:text-gray-100">
           Select a conversation
         </h3>
 
-        <p className="mt-2 text-sm leading-6 text-gray-600">
+        <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
           Click a conversation below to open the chat.
         </p>
       </div>
     )}
 
     {selectedConversationId && selectedConversation && (
-      <div className="animate-chat-panel-in rounded-lg border border-gray-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+      <div className="animate-chat-panel-in rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
           <div>
-            <h3 className="font-heading text-sm font-bold text-gray-900">
+            <h3 className="font-heading text-sm font-bold text-gray-900 dark:text-gray-100">
               {selectedConversation.item_title ?? selectedConversation.partner_name}
             </h3>
 
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {selectedConversation.item_title
                 ? selectedConversation.partner_name
                 : "Active conversation"}
@@ -350,7 +350,7 @@ export default function ConversationPanel({
           <button
             type="button"
             onClick={handleCloseConversation}
-            className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+            className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
             aria-label="Close conversation"
           >
             <X size={20} />
@@ -359,13 +359,13 @@ export default function ConversationPanel({
 
         <div className="message-panel-scrollbar mr-2 max-h-56 min-h-36 space-y-3 overflow-y-auto px-4 py-4 pr-5">
           {isLoadingMessages && (
-            <p className="text-center text-sm text-gray-500">
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400">
               Loading messages...
             </p>
           )}
 
           {!isLoadingMessages && messages.length === 0 && (
-            <p className="text-center text-sm text-gray-500">
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400">
               No messages in this conversation yet.
             </p>
           )}
@@ -386,7 +386,7 @@ export default function ConversationPanel({
                       <DropdownMenuTrigger asChild>
                         <button
                           type="button"
-                          className="mt-1 rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-700 group-hover:opacity-100 data-[state=open]:opacity-100"
+                          className="mt-1 rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-700 group-hover:opacity-100 data-[state=open]:opacity-100 dark:hover:bg-gray-700 dark:hover:text-gray-300"
                           aria-label="Message actions"
                         >
                           <MoreHorizontal size={14} />
@@ -409,7 +409,7 @@ export default function ConversationPanel({
                     className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-5 ${
                       isMine
                         ? "bg-[#C8102E] text-white"
-                        : "bg-gray-100 text-gray-800"
+                        : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100"
                     }`}
                   >
                     {message.message_text}
@@ -421,14 +421,14 @@ export default function ConversationPanel({
 
         <form
           onSubmit={handleSendMessage}
-          className="border-t border-gray-100 p-3"
+          className="border-t border-gray-100 p-3 dark:border-gray-700"
         >
           <textarea
             value={newMessage}
             onChange={(event) => setNewMessage(event.target.value)}
             placeholder="Write a message..."
             rows={3}
-            className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+            className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
           />
 
           <Button
@@ -446,13 +446,13 @@ export default function ConversationPanel({
     )}
 
     {/* Bottom — Conversation list */}
-    <div className="border-t border-gray-100 pt-4">
+    <div className="border-t border-gray-100 pt-4 dark:border-gray-700">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-heading text-sm font-bold uppercase tracking-wide text-gray-800">
+        <h3 className="font-heading text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-200">
           Conversations
         </h3>
 
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {conversations.length} total
         </p>
       </div>
@@ -466,8 +466,8 @@ export default function ConversationPanel({
               key={conversation.id}
               className={`group relative rounded-lg border transition-all duration-200 ${
                 isSelected
-                  ? "border-[#C8102E] bg-red-50 shadow-sm"
-                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm"
+                  ? "border-[#C8102E] bg-red-50 shadow-sm dark:bg-red-900/20"
+                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600 dark:hover:bg-gray-700"
               }`}
             >
               <button
@@ -475,17 +475,17 @@ export default function ConversationPanel({
                 onClick={() => setSelectedConversationId(conversation.id)}
                 className="w-full rounded-lg px-3 py-2.5 pr-10 text-left"
               >
-                <p className="font-heading text-sm font-bold text-gray-900">
+                <p className="font-heading text-sm font-bold text-gray-900 dark:text-gray-100">
                   {conversation.item_title ?? conversation.partner_name}
                 </p>
 
                 {conversation.item_title && (
-                  <p className="mt-0.5 text-xs font-medium text-gray-600">
+                  <p className="mt-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
                     {conversation.partner_name}
                   </p>
                 )}
 
-                <p className="mt-1 line-clamp-1 text-xs text-gray-500">
+                <p className="mt-1 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
                   {conversation.last_message || "No messages yet"}
                 </p>
               </button>
@@ -494,7 +494,7 @@ export default function ConversationPanel({
                 <DropdownMenuTrigger asChild>
                   <button
                     type="button"
-                    className="absolute right-2 top-2 rounded-full p-1 text-gray-500 opacity-0 transition hover:bg-gray-200 hover:text-gray-900 group-hover:opacity-100 data-[state=open]:opacity-100"
+                    className="absolute right-2 top-2 rounded-full p-1 text-gray-500 opacity-0 transition hover:bg-gray-200 hover:text-gray-900 group-hover:opacity-100 data-[state=open]:opacity-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-gray-100"
                     aria-label="Conversation actions"
                   >
                     <MoreHorizontal size={16} />
