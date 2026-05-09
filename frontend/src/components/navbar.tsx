@@ -58,73 +58,30 @@ export default function Navbar() {
 
   return (
     <nav className="w-full border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">
-        {/* Logo */}
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          {/* SDSU letters — always red, no dark mode change needed */}
-          <svg
-            viewBox="0 0 100 44"
-            width={72}
-            aria-label="SDSU"
-            style={{ height: "auto", display: "block" }}
-          >
-            <text
-              x="50"
-              y="38"
-              fontFamily="'Times New Roman', Times, Georgia, serif"
-              fontSize="40"
-              fontWeight="700"
-              fill="#C8102E"
-              textAnchor="middle"
-            >
-              SDSU
-            </text>
-          </svg>
-
-          {/* Divider between SDSU and university name */}
-          <div className="h-8 w-px bg-gray-400 dark:bg-gray-500" />
-
-          {/* San Diego State University — currentColor flips with dark mode */}
-          <svg
-            viewBox="0 0 115 38"
-            width={100}
-            aria-label="San Diego State University"
-            className="text-gray-900 dark:text-white"
-            style={{ height: "auto", display: "block" }}
-          >
-            <text
-              x="0"
-              y="15"
-              fontFamily="Arial, Helvetica, sans-serif"
-              fontSize="13"
-              fontWeight="400"
-              fill="currentColor"
-            >
-              San Diego State
-            </text>
-            <text
-              x="0"
-              y="32"
-              fontFamily="Arial, Helvetica, sans-serif"
-              fontSize="13"
-              fontWeight="400"
-              fill="currentColor"
-            >
-              University
-            </text>
-          </svg>
-
-          {/* Divider before Lost & Found */}
-          <div className="h-10 w-px bg-gray-300 dark:bg-gray-600" />
-
-          {/* Lost & Found — unchanged */}
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 md:px-6">
+        {/* Logo */}      
+        <Link
+          href="/"
+          className="flex h-14 w-[300px] shrink-0 items-center overflow-hidden"
+        >
+          {/* Dark logo for light mode */}
           <Image
-            src="/logo-lost-found.svg"
-            alt="Lost & Found"
-            width={130}
-            height={26}
-            loading="eager"
-            style={{ height: "auto" }}
+            src="/logo_lightv2.png"
+            alt="SDSU Lost & Found Logo"
+            width={900}
+            height={300}
+            priority
+            className="block w-[250px] max-w-none object-contain dark:hidden"
+          />
+
+          {/* Light logo for dark mode */}
+          <Image
+            src="/logo_darkv2.png"
+            alt="SDSU Lost & Found Logo"
+            width={900}
+            height={300}
+            priority
+            className="hidden w-[250px] max-w-none object-contain dark:block"
           />
         </Link>
 
