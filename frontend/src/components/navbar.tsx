@@ -95,13 +95,6 @@ export default function Navbar() {
           </Link>
 
           <Link
-            href="/create-post"
-            className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] md:inline"
-          >
-            Create Post
-          </Link>
-
-          <Link
             href="/about"
             className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] md:inline"
           >
@@ -119,7 +112,7 @@ export default function Navbar() {
 
               <button
                 onClick={handleSignOut}
-                className="rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060]"
+                className="rounded-md bg-[#C8102E] px-3 py-1.5 font-heading font-semibold text-white transition-colors hover:bg-[#a00d24]"
               >
                 Sign Out
               </button>
