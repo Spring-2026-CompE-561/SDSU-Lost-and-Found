@@ -155,7 +155,7 @@ export default function Home() {
       <Navbar />
 
       {/* Search Bar */}
-      <div className="mx-auto max-w-7xl px-4 pb-2 pt-5">
+      <div className="px-4 pb-2 pt-5 sm:px-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
@@ -177,7 +177,7 @@ export default function Home() {
       </div>
 
       {/* Main 3-column layout */}
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)_390px]">
+      <div className="grid grid-cols-1 gap-6 px-4 py-4 sm:px-6 lg:grid-cols-[220px_minmax(0,1fr)_390px]">
         {/* Left — Filters */}
         <aside className="h-fit rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:sticky lg:top-6 lg:self-start">
           <h2 className="mb-4 font-heading text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-200">

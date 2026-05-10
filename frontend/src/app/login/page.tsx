@@ -208,7 +208,16 @@ function LoginContent() {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-300">
+            <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-300">
+              <Link
+                href="/forgot-password"
+                className="font-heading font-semibold text-[#C8102E] hover:underline"
+              >
+                Forgot your password?
+              </Link>
+            </p>
+
+            <p className="mt-3 text-center text-sm text-gray-600 dark:text-gray-300">
               Don&apos;t have an account?{" "}
               <Link
                 href="/create-account"
