@@ -1,7 +1,9 @@
 # app/core/auth.py
 from datetime import UTC, datetime, timedelta
 import uuid
+from typing import Annotated
 
+from fastapi import Depends, HTTPException, status
 import jwt
 from fastapi.security import OAuth2PasswordBearer
 from jwt import PyJWTError
@@ -18,7 +20,32 @@ password_hash = PasswordHash.recommended()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/user/login")
 
+def get_current_user_id(
+    token: Annotated[str, Depends(oauth2_scheme)],
+) -> int:
+    payload = verify_token(token)
 
+    if payload is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token.",
+        )
+
+    if payload.get("scope") != "user":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token scope.",
+        )
+
+    user_id = payload.get("sub")
+
+    try:
+        return int(user_id)
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token subject.",
+        )
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """
     Create a JWT access token.

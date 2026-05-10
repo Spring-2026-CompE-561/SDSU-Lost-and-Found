@@ -14,8 +14,11 @@
 #
 # ============================================================
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
+
+from app.core.auth import get_current_user_id
 from app.core.db import get_db
 from app.schemas.conversation import (
     ConversationCreate,
@@ -31,6 +34,8 @@ import app.services.chat_service as chat_service
 api_router = APIRouter(prefix="/conversations", tags=["conversations"])
 
 DB = Annotated[Session, Depends(get_db)]
+CurrentUserId = Annotated[int, Depends(get_current_user_id)]
+
 
 
 
@@ -62,11 +67,12 @@ def delete_conversation(conversation_id: int, db: DB):
     return SuccessResponse()
 
 
-#--------- Routes for Messages ----------#
+# GET /conversations/{conversation_id}/messages
 @api_router.get("/{conversation_id}/messages", response_model=list[MessageListItem])
 def get_messages(
     conversation_id: int,
     db: DB,
+    current_user_id: CurrentUserId,
     limit: int = Query(50, ge=1),
     offset: int = Query(0, ge=0),
 ):
@@ -81,6 +87,7 @@ def send_message(
     conversation_id: int,
     body: MessageCreate,
     db: DB,
+    current_user_id: CurrentUserId,
 ):
 #    Send a new message in a conversation.
     current_user_id = 1

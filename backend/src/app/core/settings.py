@@ -31,6 +31,16 @@ class Settings(BaseSettings):
         description="Database connection URL",
     )
 
+    upload_dir: str = Field(
+        default="./data/uploads",
+        description="Filesystem directory where uploaded images are stored.",
+    )
+
+    max_upload_size_bytes: int = Field(
+        default=5 * 1024 * 1024,
+        description="Maximum size in bytes for an uploaded image (default 5 MB).",
+    )
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

@@ -20,8 +20,22 @@ class Item(Base):
     title: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     location: Mapped[str] = mapped_column(String(255), nullable=False)
+    # "lost" or "found"
+    report_type: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="lost",
+        index=True,
+    )
     image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    given_back: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+
+    # False = item still needs action
+    # True = item was returned / resolved
+    given_back: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     owner = relationship("User", back_populates="items")
