@@ -12,7 +12,12 @@ from app.repository.conversation_repository import ConversationRepository
 from app.repository.item_repository import ItemRepository
 from app.repository.message_repository import MessageRepository
 from app.repository.user import UserRepository
-from app.schemas.conversation import ConversationListItem, ConversationOut
+from app.schemas.conversation import (
+    ConversationListItem,
+    ConversationOut,
+    ConversationStartResponse,
+)
+from app.schemas.message import MessageOut
 
 def get_or_create_conversation(
     db: Session,
@@ -44,6 +49,89 @@ def get_or_create_conversation(
         item_id=convo.item_id,
     )
 
+def start_conversation_with_message(
+    db: Session,
+    current_user_id: int,
+    recipient_id: int,
+    item_id: int,
+    content: str,
+) -> ConversationStartResponse:
+    """
+    Create or reuse an item-specific conversation and send the first message.
+
+    This prevents empty conversations because the conversation is only created
+    when the user actually sends a message.
+    """
+    cleaned_content = content.strip()
+
+    if not cleaned_content:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Message content cannot be empty.",
+        )
+
+    if current_user_id == recipient_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You cannot start a conversation with yourself.",
+        )
+
+    recipient = UserRepository.get_by_id(db, recipient_id)
+    if recipient is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Recipient user not found.",
+        )
+
+    item = ItemRepository.get_by_id(db, item_id)
+    if item is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Item not found.",
+        )
+
+    if item.user_id != recipient_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Recipient does not own this item.",
+        )
+
+    convo = ConversationRepository.get_by_user_pair_and_item(
+        db,
+        current_user_id,
+        recipient_id,
+        item_id,
+    )
+
+    if not convo:
+        convo = ConversationRepository.create(
+            db,
+            current_user_id,
+            recipient_id,
+            item_id,
+        )
+
+    message = MessageRepository.create(
+        db,
+        convo.id,
+        current_user_id,
+        cleaned_content,
+    )
+
+    return ConversationStartResponse(
+        conversation=ConversationOut(
+            id=convo.id,
+            participant_ids=[convo.user_id1, convo.user_id2],
+            item_id=convo.item_id,
+        ),
+        message=MessageOut(
+            id=message.id,
+            sender_id=message.sender_id,
+            message_text=message.message_text,
+            is_read=message.is_read,
+            created_at=message.created_at,
+        ),
+    )
 
 def list_conversations(
     db: Session,

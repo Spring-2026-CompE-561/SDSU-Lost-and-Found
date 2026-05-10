@@ -187,6 +187,25 @@ export function createConversation(recipientId: number, itemId?: number) {
     }),
   });
 }
+export type ConversationStartResponse = {
+  conversation: ConversationOut;
+  message: MessageOut;
+};
+
+export function startConversationWithMessage(
+  recipientId: number,
+  itemId: number,
+  content: string,
+) {
+  return apiFetch<ConversationStartResponse>("/api/v1/conversations/start", {
+    method: "POST",
+    body: JSON.stringify({
+      recipient_id: recipientId,
+      item_id: itemId,
+      content,
+    }),
+  });
+}
 
 export function deleteConversation(conversationId: number) {
   return apiFetch<SuccessResponse>(`/api/v1/conversations/${conversationId}`, {

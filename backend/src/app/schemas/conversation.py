@@ -1,7 +1,7 @@
 # backend/src/app/schemas/conversation.py
 #from datetime import datetime
-from pydantic import BaseModel
-
+from pydantic import BaseModel,Field
+from app.schemas.message import MessageOut
 
 
 # Input Schema
@@ -29,7 +29,15 @@ class ConversationListItem(BaseModel):
     item_title: str | None = None
 
     model_config = {"from_attributes": True}
+class ConversationStartCreate(BaseModel):
+    recipient_id: int
+    item_id: int
+    content: str = Field(..., min_length=1, max_length=2000)
 
+
+class ConversationStartResponse(BaseModel):
+    conversation: ConversationOut
+    message: MessageOut
 
 class SuccessResponse(BaseModel):
     success: bool = True

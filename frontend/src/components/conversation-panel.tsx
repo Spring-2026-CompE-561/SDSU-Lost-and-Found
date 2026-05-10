@@ -19,13 +19,22 @@ import {
   getConversationMessages,
   getConversations,
   sendConversationMessage,
+  startConversationWithMessage,
 } from "@/lib/api";
 
 type ConversationPanelProps = {
   activeConversationId?: number | null;
   refreshKey?: number;
+  draftConversation?: DraftConversation | null;
+  onDraftConversationClose?: () => void;
+  onConversationStarted?: (conversationId: number) => void;
 };
 
+type DraftConversation = {
+  recipientId: number;
+  itemId: number;
+  itemTitle: string;
+};
 function getStoredUserId() {
   if (typeof window === "undefined") {
     return null;
@@ -45,6 +54,9 @@ function getStoredUserId() {
 export default function ConversationPanel({
   activeConversationId = null,
   refreshKey = 0,
+  draftConversation = null,
+  onDraftConversationClose,
+  onConversationStarted,
 }: ConversationPanelProps) {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
@@ -175,7 +187,46 @@ export default function ConversationPanel({
       setErrorMessage(getApiErrorMessage(error));
     }
   }
+  function handleCloseDraftConversation() {
+    onDraftConversationClose?.();
+    setNewMessage("");
+    setErrorMessage("");
+  }
 
+  async function handleSendDraftMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedMessage = newMessage.trim();
+
+    if (!draftConversation || !trimmedMessage) {
+      return;
+    }
+
+    try {
+      setErrorMessage("");
+      setIsSending(true);
+
+      const response = await startConversationWithMessage(
+        draftConversation.recipientId,
+        draftConversation.itemId,
+        trimmedMessage,
+      );
+
+      setNewMessage("");
+      onDraftConversationClose?.();
+      setSelectedConversationId(response.conversation.id);
+      setMessages([response.message]);
+
+      const updatedConversations = await getConversations();
+      setConversations(updatedConversations);
+
+      onConversationStarted?.(response.conversation.id);
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error));
+    } finally {
+      setIsSending(false);
+    }
+  }
   async function handleSendMessage(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -298,7 +349,7 @@ export default function ConversationPanel({
             </div>
           )}
 
-          {!isLoadingConversations && conversations.length === 0 && (
+          {!isLoadingConversations && !draftConversation && conversations.length === 0 && (
             <div className="flex min-h-[360px] flex-1 items-center justify-center text-center">
               <div>
                 <MessageCircle className="mx-auto h-10 w-10 text-[#C8102E]" />
@@ -315,208 +366,256 @@ export default function ConversationPanel({
             </div>
           )}
 
-          {!isLoadingConversations && conversations.length > 0 && (
-  <div className="mt-5 space-y-5">
-    {/* Top — Active chat */}
-    {!selectedConversationId && (
-      <div className="animate-chat-panel-in rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center dark:border-gray-600 dark:bg-gray-700/50">
-        <MessageCircle className="mx-auto h-10 w-10 text-[#C8102E]" />
+          {!isLoadingConversations && (draftConversation || conversations.length > 0) && (
+            <div className="mt-5 space-y-5">
+              {/* Top — Active chat */}
+              {draftConversation && (
+                <div className="animate-chat-panel-in rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                  <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                    <div>
+                      <h3 className="font-heading text-sm font-bold text-gray-900 dark:text-gray-100">
+                        New message about:
+                      </h3>
 
-        <h3 className="mt-4 font-heading text-lg font-bold text-gray-900 dark:text-gray-100">
-          Select a conversation
-        </h3>
+                      <p className="mt-1 text-sm font-semibold text-[#C8102E]">
+                        {draftConversation.itemTitle}
+                      </p>
+                    </div>
 
-        <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
-          Click a conversation below to open the chat.
-        </p>
-      </div>
-    )}
+                    <button
+                      type="button"
+                      onClick={handleCloseDraftConversation}
+                      className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                      aria-label="Close draft conversation"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
 
-    {selectedConversationId && selectedConversation && (
-      <div className="animate-chat-panel-in rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
-          <div>
-            <h3 className="font-heading text-sm font-bold text-gray-900 dark:text-gray-100">
-              {selectedConversation.item_title ?? selectedConversation.partner_name}
-            </h3>
-
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {selectedConversation.item_title
-                ? selectedConversation.partner_name
-                : "Active conversation"}
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={handleCloseConversation}
-            className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
-            aria-label="Close conversation"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="message-panel-scrollbar mr-2 max-h-56 min-h-36 space-y-3 overflow-y-auto px-4 py-4 pr-5">
-          {isLoadingMessages && (
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-              Loading messages...
-            </p>
-          )}
-
-          {!isLoadingMessages && messages.length === 0 && (
-            <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-              No messages in this conversation yet.
-            </p>
-          )}
-
-          {!isLoadingMessages &&
-            messages.map((message) => {
-              const isMine = message.sender_id === currentUserId;
-
-              return (
-                <div
-                  key={message.id}
-                  className={`group flex items-start gap-1 ${
-                    isMine ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {isMine && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button
-                          type="button"
-                          className="mt-1 rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-700 group-hover:opacity-100 data-[state=open]:opacity-100 dark:hover:bg-gray-700 dark:hover:text-gray-300"
-                          aria-label="Message actions"
-                        >
-                          <MoreHorizontal size={14} />
-                        </button>
-                      </DropdownMenuTrigger>
-
-                      <DropdownMenuContent align="end" className="w-44">
-                        <DropdownMenuItem
-                          variant="destructive"
-                          onClick={() => handleDeleteMessage(message.id)}
-                        >
-                          <Trash2 />
-                          Delete message
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-
-                  <div
-                    className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-5 ${
-                      isMine
-                        ? "bg-[#C8102E] text-white"
-                        : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100"
-                    }`}
+                  <form
+                    onSubmit={handleSendDraftMessage}
+                    className="p-3"
                   >
-                    {message.message_text}
+                    <textarea
+                      value={newMessage}
+                      onChange={(event) => setNewMessage(event.target.value)}
+                      placeholder="Write your first message..."
+                      rows={4}
+                      className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+                    />
+
+                    <Button
+                      type="submit"
+                      disabled={isSending || !newMessage.trim()}
+                      className="mt-3 w-full bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      {isSending ? "Sending..." : "Send Message"}
+                    </Button>
+                  </form>
+                </div>
+              )}
+              {!draftConversation && !selectedConversationId && (
+                <div className="animate-chat-panel-in rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-10 text-center dark:border-gray-600 dark:bg-gray-700/50">
+                  <MessageCircle className="mx-auto h-10 w-10 text-[#C8102E]" />
+
+                  <h3 className="mt-4 font-heading text-lg font-bold text-gray-900 dark:text-gray-100">
+                    Select a conversation
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                    Click a conversation below to open the chat.
+                  </p>
+                </div>
+              )}
+
+              {!draftConversation && selectedConversationId && selectedConversation && (
+                <div className="animate-chat-panel-in rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                  <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+                    <div>
+                      <h3 className="font-heading text-sm font-bold text-gray-900 dark:text-gray-100">
+                        {selectedConversation.item_title ?? selectedConversation.partner_name}
+                      </h3>
+
+                      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        {selectedConversation.item_title
+                          ? selectedConversation.partner_name
+                          : "Active conversation"}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleCloseConversation}
+                      className="rounded-full p-2 text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
+                      aria-label="Close conversation"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+
+                  <div className="message-panel-scrollbar mr-2 max-h-56 min-h-36 space-y-3 overflow-y-auto px-4 py-4 pr-5">
+                    {isLoadingMessages && (
+                      <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                        Loading messages...
+                      </p>
+                    )}
+
+                    {!isLoadingMessages && messages.length === 0 && (
+                      <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                        No messages in this conversation yet.
+                      </p>
+                    )}
+
+                    {!isLoadingMessages &&
+                      messages.map((message) => {
+                        const isMine = message.sender_id === currentUserId;
+
+                        return (
+                          <div
+                            key={message.id}
+                            className={`group flex items-start gap-1 ${
+                              isMine ? "justify-end" : "justify-start"
+                            }`}
+                          >
+                            {isMine && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="mt-1 rounded-full p-1 text-gray-400 opacity-0 transition-opacity hover:bg-gray-100 hover:text-gray-700 group-hover:opacity-100 data-[state=open]:opacity-100 dark:hover:bg-gray-700 dark:hover:text-gray-300"
+                                    aria-label="Message actions"
+                                  >
+                                    <MoreHorizontal size={14} />
+                                  </button>
+                                </DropdownMenuTrigger>
+
+                                <DropdownMenuContent align="end" className="w-44">
+                                  <DropdownMenuItem
+                                    variant="destructive"
+                                    onClick={() => handleDeleteMessage(message.id)}
+                                  >
+                                    <Trash2 />
+                                    Delete message
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
+
+                            <div
+                              className={`max-w-[85%] rounded-lg px-3 py-2 text-sm leading-5 ${
+                                isMine
+                                  ? "bg-[#C8102E] text-white"
+                                  : "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100"
+                              }`}
+                            >
+                              {message.message_text}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  <form
+                    onSubmit={handleSendMessage}
+                    className="border-t border-gray-100 p-3 dark:border-gray-700"
+                  >
+                    <textarea
+                      value={newMessage}
+                      onChange={(event) => setNewMessage(event.target.value)}
+                      placeholder="Write a message..."
+                      rows={3}
+                      className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+                    />
+
+                    <Button
+                      type="submit"
+                      disabled={
+                        isSending || !selectedConversationId || !newMessage.trim()
+                      }
+                      className="mt-3 w-full bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      {isSending ? "Sending..." : "Send"}
+                    </Button>
+                  </form>
+                </div>
+              )}
+
+              {/* Bottom — Conversation list */}
+              {conversations.length > 0 && (
+                <div className="border-t border-gray-100 pt-4 dark:border-gray-700">
+                  <div className="mb-3 flex items-center justify-between">
+                    <h3 className="font-heading text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-200">
+                      Conversations
+                    </h3>
+
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {conversations.length} total
+                    </p>
+                  </div>
+
+                  <div className="message-panel-scrollbar mr-2 max-h-52 space-y-2 overflow-y-auto py-1 pl-1 pr-5">
+                    {conversations.map((conversation) => {
+                      const isSelected = conversation.id === selectedConversationId;
+
+                      return (
+                        <div
+                          key={conversation.id}
+                          className={`group relative rounded-lg border transition-all duration-200 ${
+                            isSelected
+                              ? "border-[#C8102E] bg-red-50 shadow-sm dark:bg-red-900/20"
+                              : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => setSelectedConversationId(conversation.id)}
+                            className="w-full rounded-lg px-3 py-2.5 pr-10 text-left"
+                          >
+                            <p className="font-heading text-sm font-bold text-gray-900 dark:text-gray-100">
+                              {conversation.item_title ?? conversation.partner_name}
+                            </p>
+
+                            {conversation.item_title && (
+                              <p className="mt-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                                {conversation.partner_name}
+                              </p>
+                            )}
+
+                            <p className="mt-1 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
+                              {conversation.last_message || "No messages yet"}
+                            </p>
+                          </button>
+
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button
+                                type="button"
+                                className="absolute right-2 top-2 rounded-full p-1 text-gray-500 opacity-0 transition hover:bg-gray-200 hover:text-gray-900 group-hover:opacity-100 data-[state=open]:opacity-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-gray-100"
+                                aria-label="Conversation actions"
+                              >
+                                <MoreHorizontal size={16} />
+                              </button>
+                            </DropdownMenuTrigger>
+
+                            <DropdownMenuContent align="end" className="w-48">
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => handleDeleteConversation(conversation.id)}
+                              >
+                                <Trash2 />
+                                Delete conversation
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
-              );
-            })}
-        </div>
-
-        <form
-          onSubmit={handleSendMessage}
-          className="border-t border-gray-100 p-3 dark:border-gray-700"
-        >
-          <textarea
-            value={newMessage}
-            onChange={(event) => setNewMessage(event.target.value)}
-            placeholder="Write a message..."
-            rows={3}
-            className="w-full resize-none rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
-          />
-
-          <Button
-            type="submit"
-            disabled={
-              isSending || !selectedConversationId || !newMessage.trim()
-            }
-            className="mt-3 w-full bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Send className="mr-2 h-4 w-4" />
-            {isSending ? "Sending..." : "Send"}
-          </Button>
-        </form>
-      </div>
-    )}
-
-    {/* Bottom — Conversation list */}
-    <div className="border-t border-gray-100 pt-4 dark:border-gray-700">
-      <div className="mb-3 flex items-center justify-between">
-        <h3 className="font-heading text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-200">
-          Conversations
-        </h3>
-
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          {conversations.length} total
-        </p>
-      </div>
-
-      <div className="message-panel-scrollbar mr-2 max-h-52 space-y-2 overflow-y-auto py-1 pl-1 pr-5">
-        {conversations.map((conversation) => {
-          const isSelected = conversation.id === selectedConversationId;
-
-          return (
-            <div
-              key={conversation.id}
-              className={`group relative rounded-lg border transition-all duration-200 ${
-                isSelected
-                  ? "border-[#C8102E] bg-red-50 shadow-sm dark:bg-red-900/20"
-                  : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 hover:shadow-sm dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600 dark:hover:bg-gray-700"
-              }`}
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedConversationId(conversation.id)}
-                className="w-full rounded-lg px-3 py-2.5 pr-10 text-left"
-              >
-                <p className="font-heading text-sm font-bold text-gray-900 dark:text-gray-100">
-                  {conversation.item_title ?? conversation.partner_name}
-                </p>
-
-                {conversation.item_title && (
-                  <p className="mt-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    {conversation.partner_name}
-                  </p>
-                )}
-
-                <p className="mt-1 line-clamp-1 text-xs text-gray-500 dark:text-gray-400">
-                  {conversation.last_message || "No messages yet"}
-                </p>
-              </button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    type="button"
-                    className="absolute right-2 top-2 rounded-full p-1 text-gray-500 opacity-0 transition hover:bg-gray-200 hover:text-gray-900 group-hover:opacity-100 data-[state=open]:opacity-100 dark:text-gray-400 dark:hover:bg-gray-600 dark:hover:text-gray-100"
-                    aria-label="Conversation actions"
-                  >
-                    <MoreHorizontal size={16} />
-                  </button>
-                </DropdownMenuTrigger>
-
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => handleDeleteConversation(conversation.id)}
-                  >
-                    <Trash2 />
-                    Delete conversation
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  </div>
+              )}
+              </div>
 )}
         </>
       )}

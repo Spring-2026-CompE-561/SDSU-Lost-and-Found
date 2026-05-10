@@ -9,7 +9,7 @@ import ConversationPanel from "@/components/conversation-panel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, PlusCircle, Search } from "lucide-react";
-import { apiFetch, createConversation, getApiErrorMessage } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 type ItemPost = {
   id: number;
@@ -24,6 +24,11 @@ type ItemPost = {
 };
 
 type ReportType = "lost" | "found";
+type DraftConversation = {
+  recipientId: number;
+  itemId: number;
+  itemTitle: string;
+};
 
 export default function Home() {
   const router = useRouter();
@@ -42,7 +47,8 @@ export default function Home() {
   >(null);
   const [conversationRefreshKey, setConversationRefreshKey] = useState(0);
   const [messageActionError, setMessageActionError] = useState("");
-
+  const [draftConversation, setDraftConversation] =
+    useState<DraftConversation | null>(null);
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       async function fetchPosts() {
@@ -110,7 +116,11 @@ export default function Home() {
     setDateRange("");
   }
 
-  async function handleMessageAboutItem(ownerUserId: number, itemId: number) {
+  function handleMessageAboutItem(
+    ownerUserId: number,
+    itemId: number,
+    itemTitle: string,
+  ) {
     const token = localStorage.getItem("token");
     const storedUserId = localStorage.getItem("userId");
     const currentUserId = storedUserId ? Number(storedUserId) : null;
@@ -125,17 +135,14 @@ export default function Home() {
       return;
     }
 
-    try {
-      setMessageActionError("");
-
-      const conversation = await createConversation(ownerUserId, itemId);
-
-      setActiveConversationId(conversation.id);
-      setConversationRefreshKey((currentKey) => currentKey + 1);
-    } catch (error) {
-      setMessageActionError(getApiErrorMessage(error));
-    }
-  }
+    setMessageActionError("");
+    setActiveConversationId(null);
+    setDraftConversation({
+      recipientId: ownerUserId,
+      itemId,
+      itemTitle,
+    });
+}
 
   const hasActiveFilters =
     searchTerm.trim() ||
@@ -329,6 +336,13 @@ export default function Home() {
           <ConversationPanel
             activeConversationId={activeConversationId}
             refreshKey={conversationRefreshKey}
+            draftConversation={draftConversation}
+            onDraftConversationClose={() => setDraftConversation(null)}
+            onConversationStarted={(conversationId) => {
+              setDraftConversation(null);
+              setActiveConversationId(conversationId);
+              setConversationRefreshKey((currentKey) => currentKey + 1);
+            }}
           />
         </aside>
       </div>
