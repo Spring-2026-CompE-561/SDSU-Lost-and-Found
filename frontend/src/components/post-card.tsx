@@ -37,8 +37,8 @@ export default function PostCard({
   const isLost = report_type === "lost";
 
   return (
-    <article className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      <div className="flex h-52 items-center justify-center bg-gray-100 text-sm text-gray-400">
+    <article className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex h-52 items-center justify-center bg-gray-100 text-sm text-gray-400 dark:bg-gray-700 dark:text-gray-500">
         {image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -54,11 +54,11 @@ export default function PostCard({
       <div className="p-5">
         <div className="mb-3 flex items-start justify-between gap-4">
           <div>
-            <h2 className="font-heading text-xl font-bold text-gray-900">
+            <h2 className="font-heading text-xl font-bold text-gray-900 dark:text-gray-100">
               {title}
             </h2>
 
-            <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+            <p className="mt-1 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
               <MapPin size={14} />
               {location} · {formatDate(created_at)}
             </p>
@@ -75,7 +75,7 @@ export default function PostCard({
           </div>
         </div>
 
-        <p className="mb-5 text-sm leading-6 text-gray-700">{description}</p>
+        <p className="mb-5 text-sm leading-6 text-gray-700 dark:text-gray-300">{description}</p>
 
         <Button
           type="button"

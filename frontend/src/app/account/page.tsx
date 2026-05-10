@@ -152,10 +152,10 @@ export default function AccountPage() {
   }
 
   return (
-    <main className="min-h-screen bg-white text-black">
+    <main className="min-h-screen bg-white text-black dark:bg-gray-900 dark:text-white">
       <Navbar />
 
-      <section className="bg-[#f4f4f4] px-6 py-20 md:px-16">
+      <section className="bg-[#f4f4f4] px-6 py-20 dark:bg-gray-800 md:px-16">
         <div className="mx-auto max-w-5xl">
           <h1 className="font-heading text-5xl font-semibold tracking-tight md:text-6xl">
             My Account
@@ -163,7 +163,7 @@ export default function AccountPage() {
 
           <div className="mt-6 h-[2px] w-28 bg-[#C8102E]" />
 
-          <p className="mt-8 max-w-3xl text-xl leading-8 text-gray-700">
+          <p className="mt-8 max-w-3xl text-xl leading-8 text-gray-700 dark:text-gray-300">
             Your account is used to create posts, manage item recovery, and
             communicate with other users through the messaging system.
           </p>
@@ -174,13 +174,13 @@ export default function AccountPage() {
         <div className="mx-auto grid max-w-6xl items-start gap-10 lg:grid-cols-[1fr_460px]">
           <MyPostsPanel />
 
-          <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-            <h2 className="font-heading text-2xl font-bold text-gray-900">
+          <div className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="font-heading text-2xl font-bold text-gray-900 dark:text-gray-100">
               Profile Information
             </h2>
 
             {isLoading ? (
-              <p className="mt-8 text-sm text-gray-600">
+              <p className="mt-8 text-sm text-gray-600 dark:text-gray-300">
                 Loading account information...
               </p>
             ) : (
@@ -189,7 +189,7 @@ export default function AccountPage() {
                   <div>
                     <label
                       htmlFor="firstName"
-                      className="block font-heading text-sm font-semibold text-gray-800"
+                      className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
                     >
                       First Name
                     </label>
@@ -200,14 +200,14 @@ export default function AccountPage() {
                       value={firstName}
                       onChange={(event) => setFirstName(event.target.value)}
                       maxLength={15}
-                      className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                      className="mt-2 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                     />
                   </div>
 
                   <div>
                     <label
                       htmlFor="lastName"
-                      className="block font-heading text-sm font-semibold text-gray-800"
+                      className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
                     >
                       Last Name
                     </label>
@@ -218,7 +218,7 @@ export default function AccountPage() {
                       value={lastName}
                       onChange={(event) => setLastName(event.target.value)}
                       maxLength={15}
-                      className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                      className="mt-2 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                     />
                   </div>
                 </div>
@@ -263,7 +263,7 @@ export default function AccountPage() {
                 <Button
                   type="button"
                   onClick={handleSignOut}
-                  className="w-full border border-gray-300 bg-white py-6 font-heading text-base font-bold text-gray-900 hover:bg-gray-100"
+                  className="w-full border border-gray-300 bg-white py-6 font-heading text-base font-bold text-gray-900 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
                   Sign Out

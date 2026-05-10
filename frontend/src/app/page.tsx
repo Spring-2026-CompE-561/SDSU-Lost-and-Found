@@ -144,19 +144,19 @@ export default function Home() {
     dateRange;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Navbar />
 
       {/* Search Bar */}
       <div className="mx-auto max-w-7xl px-4 pb-2 pt-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
             <Input
               value={searchTerm}
               onChange={(event) => setSearchTerm(event.target.value)}
               placeholder="Search by title, description, or location..."
-              className="rounded-md border border-gray-300 bg-white pl-9"
+              className="rounded-md border border-gray-300 bg-white pl-9 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400"
             />
           </div>
 
@@ -172,19 +172,19 @@ export default function Home() {
       {/* Main 3-column layout */}
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)_390px]">
         {/* Left — Filters */}
-        <aside className="h-fit rounded-lg border border-gray-200 bg-white p-5 shadow-sm lg:sticky lg:top-6 lg:self-start">
-          <h2 className="mb-4 font-heading text-sm font-bold uppercase tracking-wide text-gray-800">
+        <aside className="h-fit rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:sticky lg:top-6 lg:self-start">
+          <h2 className="mb-4 font-heading text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-200">
             Filters
           </h2>
 
           <div className="space-y-6">
             {/* Status */}
             <section>
-              <h3 className="mb-3 font-heading text-xs font-bold uppercase tracking-wide text-gray-500">
+              <h3 className="mb-3 font-heading text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                 Status
               </h3>
 
-              <div className="space-y-3 text-sm text-gray-700">
+              <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
                 <label className="flex cursor-pointer items-center gap-2 hover:text-[#C8102E]">
                   <input
                     type="checkbox"
@@ -222,7 +222,7 @@ export default function Home() {
                 value={locationFilter}
                 onChange={(event) => setLocationFilter(event.target.value)}
                 placeholder="Library, Union..."
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
               />
             </section>
 
@@ -239,7 +239,7 @@ export default function Home() {
                 id="dateRange"
                 value={dateRange}
                 onChange={(event) => setDateRange(event.target.value)}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="">Any time</option>
                 <option value="today">Today</option>
@@ -252,13 +252,13 @@ export default function Home() {
               <Button
                 type="button"
                 onClick={clearFilters}
-                className="w-full border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100"
+                className="w-full border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
               >
                 Clear Filters
               </Button>
             )}
 
-            <p className="text-xs leading-5 text-gray-500">
+            <p className="text-xs leading-5 text-gray-500 dark:text-gray-400">
               Returned items are hidden from the home feed automatically.
             </p>
           </div>
@@ -273,8 +273,8 @@ export default function Home() {
           )}
 
           {isLoading && (
-            <section className="rounded-xl border border-gray-200 bg-white px-8 py-16 text-center shadow-sm">
-              <p className="text-gray-600">Loading posts...</p>
+            <section className="rounded-xl border border-gray-200 bg-white px-8 py-16 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <p className="text-gray-600 dark:text-gray-300">Loading posts...</p>
             </section>
           )}
 
@@ -299,17 +299,17 @@ export default function Home() {
           )}
 
           {!isLoading && !errorMessage && posts.length === 0 && (
-            <section className="flex min-h-[470px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white px-8 py-16 text-center shadow-sm">
+            <section className="flex min-h-[470px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white px-8 py-16 text-center shadow-sm dark:border-gray-600 dark:bg-gray-800">
               <div className="max-w-md">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-[#C8102E]">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-[#C8102E] dark:bg-red-900/30">
                   <PlusCircle size={34} />
                 </div>
 
-                <h1 className="mt-6 font-heading text-3xl font-bold text-gray-900">
+                <h1 className="mt-6 font-heading text-3xl font-bold text-gray-900 dark:text-gray-100">
                   No matching items found
                 </h1>
 
-                <p className="mt-4 text-base leading-7 text-gray-600">
+                <p className="mt-4 text-base leading-7 text-gray-600 dark:text-gray-300">
                   Try changing your search or filters. If you lost or found an
                   item, you can also create a new post.
                 </p>
