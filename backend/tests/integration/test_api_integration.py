@@ -267,3 +267,150 @@ class TestUserProfileFlow:
         client.post("/api/v1/user/signup", json=_USER_A)
         resp = client.post("/api/v1/user/signup", json=_USER_A)
         assert resp.status_code == 400
+
+# ---------------------------------------------------------------------------
+# Conversation flow  (mirrors: Message About Item → send first message)
+# ---------------------------------------------------------------------------
+
+class TestConversationFlow:
+    """Start item-specific conversations only when a real message is sent."""
+
+    def _create_item_for_owner(self, client, owner_auth, title="Found Hydro Flask"):
+        create = client.post("/api/v1/home/", json={
+            "title": title,
+            "description": "Black bottle found near library",
+            "location": "Love Library",
+            "report_type": "found",
+        }, headers=owner_auth["headers"])
+        assert create.status_code == 200, create.text
+        return create.json()
+
+    def test_start_conversation_creates_conversation_and_first_message(self, client):
+        owner_auth = _signup_and_login(client, _USER_A)
+        sender_auth = _signup_and_login(client, _USER_B)
+        item = self._create_item_for_owner(client, owner_auth)
+
+        resp = client.post("/api/v1/conversations/start", json={
+            "recipient_id": owner_auth["user_id"],
+            "item_id": item["id"],
+            "content": "Hi, I think this might be mine.",
+        }, headers=sender_auth["headers"])
+
+        assert resp.status_code == 200, resp.text
+        body = resp.json()
+
+        assert body["conversation"]["item_id"] == item["id"]
+        assert body["message"]["message_text"] == "Hi, I think this might be mine."
+        assert body["message"]["sender_id"] == sender_auth["user_id"]
+
+    def test_conversation_list_returns_item_title(self, client):
+        owner_auth = _signup_and_login(client, _USER_A)
+        sender_auth = _signup_and_login(client, _USER_B)
+        item = self._create_item_for_owner(client, owner_auth, "Found SDSU ID")
+
+        start = client.post("/api/v1/conversations/start", json={
+            "recipient_id": owner_auth["user_id"],
+            "item_id": item["id"],
+            "content": "Is this still available?",
+        }, headers=sender_auth["headers"])
+        assert start.status_code == 200, start.text
+
+        resp = client.get("/api/v1/conversations/", headers=sender_auth["headers"])
+        assert resp.status_code == 200, resp.text
+
+        conversations = resp.json()
+        assert len(conversations) == 1
+        assert conversations[0]["item_title"] == "Found SDSU ID"
+        assert conversations[0]["last_message"] == "Is this still available?"
+
+    def test_message_history_includes_first_message(self, client):
+        owner_auth = _signup_and_login(client, _USER_A)
+        sender_auth = _signup_and_login(client, _USER_B)
+        item = self._create_item_for_owner(client, owner_auth)
+
+        start = client.post("/api/v1/conversations/start", json={
+            "recipient_id": owner_auth["user_id"],
+            "item_id": item["id"],
+            "content": "Hello about this item.",
+        }, headers=sender_auth["headers"])
+        assert start.status_code == 200, start.text
+
+        conversation_id = start.json()["conversation"]["id"]
+
+        resp = client.get(
+            f"/api/v1/conversations/{conversation_id}/messages",
+            headers=sender_auth["headers"],
+        )
+
+        assert resp.status_code == 200, resp.text
+        messages = resp.json()
+        assert len(messages) == 1
+        assert messages[0]["message_text"] == "Hello about this item."
+
+    def test_same_users_same_item_reuse_conversation(self, client):
+        owner_auth = _signup_and_login(client, _USER_A)
+        sender_auth = _signup_and_login(client, _USER_B)
+        item = self._create_item_for_owner(client, owner_auth)
+
+        first = client.post("/api/v1/conversations/start", json={
+            "recipient_id": owner_auth["user_id"],
+            "item_id": item["id"],
+            "content": "First message",
+        }, headers=sender_auth["headers"])
+
+        second = client.post("/api/v1/conversations/start", json={
+            "recipient_id": owner_auth["user_id"],
+            "item_id": item["id"],
+            "content": "Second message",
+        }, headers=sender_auth["headers"])
+
+        assert first.status_code == 200, first.text
+        assert second.status_code == 200, second.text
+        assert first.json()["conversation"]["id"] == second.json()["conversation"]["id"]
+
+    def test_same_users_different_items_create_different_conversations(self, client):
+        owner_auth = _signup_and_login(client, _USER_A)
+        sender_auth = _signup_and_login(client, _USER_B)
+        item_one = self._create_item_for_owner(client, owner_auth, "Found Keys")
+        item_two = self._create_item_for_owner(client, owner_auth, "Found Backpack")
+
+        first = client.post("/api/v1/conversations/start", json={
+            "recipient_id": owner_auth["user_id"],
+            "item_id": item_one["id"],
+            "content": "Message about keys",
+        }, headers=sender_auth["headers"])
+
+        second = client.post("/api/v1/conversations/start", json={
+            "recipient_id": owner_auth["user_id"],
+            "item_id": item_two["id"],
+            "content": "Message about backpack",
+        }, headers=sender_auth["headers"])
+
+        assert first.status_code == 200, first.text
+        assert second.status_code == 200, second.text
+        assert first.json()["conversation"]["id"] != second.json()["conversation"]["id"]
+
+    def test_user_cannot_message_self_about_own_item(self, client):
+        owner_auth = _signup_and_login(client, _USER_A)
+        item = self._create_item_for_owner(client, owner_auth)
+
+        resp = client.post("/api/v1/conversations/start", json={
+            "recipient_id": owner_auth["user_id"],
+            "item_id": item["id"],
+            "content": "Can I message myself?",
+        }, headers=owner_auth["headers"])
+
+        assert resp.status_code == 400
+
+    def test_empty_first_message_is_rejected(self, client):
+        owner_auth = _signup_and_login(client, _USER_A)
+        sender_auth = _signup_and_login(client, _USER_B)
+        item = self._create_item_for_owner(client, owner_auth)
+
+        resp = client.post("/api/v1/conversations/start", json={
+            "recipient_id": owner_auth["user_id"],
+            "item_id": item["id"],
+            "content": "",
+        }, headers=sender_auth["headers"])
+
+        assert resp.status_code == 422

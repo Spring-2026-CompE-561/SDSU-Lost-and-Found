@@ -12,7 +12,11 @@ interface PostCardProps {
   image_url: string | null;
   given_back: boolean;
   created_at: string;
-  onMessageAboutItem?: (ownerUserId: number, itemId: number) => void;
+  onMessageAboutItem?: (
+    ownerUserId: number,
+    itemId: number,
+    itemTitle: string,
+) => void;
 }
 
 function formatDate(date: string) {
@@ -79,7 +83,7 @@ export default function PostCard({
 
         <Button
           type="button"
-          onClick={() => onMessageAboutItem?.(user_id, id)}
+          onClick={() =>  onMessageAboutItem?.(user_id, id, title)}
           className="w-full bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24]"
         >
           <MessageCircle className="mr-2 h-4 w-4" />

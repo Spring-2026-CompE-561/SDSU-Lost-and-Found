@@ -15,6 +15,8 @@ from app.schemas.conversation import (
     ConversationCreate,
     ConversationListItem,
     ConversationOut,
+    ConversationStartCreate,
+    ConversationStartResponse,
     SuccessResponse,
 )
 from app.schemas.message import MessageCreate, MessageOut, MessageListItem
@@ -43,7 +45,25 @@ def create_conversation(
         body.item_id,
     )
 
+# POST /conversations/start
+@api_router.post("/start", response_model=ConversationStartResponse)
+def start_conversation_with_message(
+    body: ConversationStartCreate,
+    db: DB,
+    current_user_id: CurrentUserId,
+):
+    """
+    Create or reuse a conversation and send the first message.
 
+    This is the preferred frontend flow because it prevents empty conversations.
+    """
+    return conversation_service.start_conversation_with_message(
+        db,
+        current_user_id,
+        body.recipient_id,
+        body.item_id,
+        body.content,
+    )
 # GET /conversations/
 @api_router.get("/", response_model=list[ConversationListItem])
 def list_conversations(
