@@ -1,337 +1,201 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
-import PostCard from "@/components/post-card";
-import ConversationPanel from "@/components/conversation-panel";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, PlusCircle, Search } from "lucide-react";
-import { apiFetch, createConversation, getApiErrorMessage } from "@/lib/api";
+import {
+  ArrowRight,
+  MessageCircle,
+  PackageCheck,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
 
-type ItemPost = {
-  id: number;
-  user_id: number;
-  title: string;
-  description: string;
-  location: string;
-  report_type: "lost" | "found";
-  image_url: string | null;
-  given_back: boolean;
-  created_at: string;
-};
-
-type ReportType = "lost" | "found";
-
-export default function Home() {
-  const router = useRouter();
-
-  const [posts, setPosts] = useState<ItemPost[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatuses, setSelectedStatuses] = useState<ReportType[]>([]);
-  const [locationFilter, setLocationFilter] = useState("");
-  const [dateRange, setDateRange] = useState("");
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const [activeConversationId, setActiveConversationId] = useState<
-    number | null
-  >(null);
-  const [conversationRefreshKey, setConversationRefreshKey] = useState(0);
-  const [messageActionError, setMessageActionError] = useState("");
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      async function fetchPosts() {
-        try {
-          setIsLoading(true);
-          setErrorMessage("");
-
-          const params = new URLSearchParams();
-
-          params.set("limit", "50");
-          params.set("offset", "0");
-          params.set("active_only", "true");
-
-          const trimmedSearch = searchTerm.trim();
-          const trimmedLocation = locationFilter.trim();
-
-          if (trimmedSearch) {
-            params.set("search", trimmedSearch);
-          }
-
-          if (trimmedLocation) {
-            params.set("location", trimmedLocation);
-          }
-
-          if (dateRange) {
-            params.set("date_range", dateRange);
-          }
-
-          // Backend accepts one report_type at a time.
-          // If both or none are selected, we show all active posts.
-          if (selectedStatuses.length === 1) {
-            params.set("report_type", selectedStatuses[0]);
-          }
-
-          const data = await apiFetch<ItemPost[]>(
-            `/api/v1/home/?${params.toString()}`,
-          );
-
-          setPosts(data);
-        } catch {
-          setErrorMessage("Could not connect to the backend server.");
-        } finally {
-          setIsLoading(false);
-        }
-      }
-
-      fetchPosts();
-    }, 300);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [searchTerm, selectedStatuses, locationFilter, dateRange]);
-
-  function toggleStatusFilter(status: ReportType) {
-    setSelectedStatuses((currentStatuses) =>
-      currentStatuses.includes(status)
-        ? currentStatuses.filter((currentStatus) => currentStatus !== status)
-        : [...currentStatuses, status],
-    );
-  }
-
-  function clearFilters() {
-    setSearchTerm("");
-    setSelectedStatuses([]);
-    setLocationFilter("");
-    setDateRange("");
-  }
-
-  async function handleMessageAboutItem(ownerUserId: number, itemId: number) {
-    const token = localStorage.getItem("token");
-    const storedUserId = localStorage.getItem("userId");
-    const currentUserId = storedUserId ? Number(storedUserId) : null;
-
-    if (!token) {
-      router.push("/login?message=signin-required-message&redirect=/");
-      return;
-    }
-
-    if (currentUserId === ownerUserId) {
-      setMessageActionError("You cannot message yourself about your own post.");
-      return;
-    }
-
-    try {
-      setMessageActionError("");
-
-      const conversation = await createConversation(ownerUserId, itemId);
-
-      setActiveConversationId(conversation.id);
-      setConversationRefreshKey((currentKey) => currentKey + 1);
-    } catch (error) {
-      setMessageActionError(getApiErrorMessage(error));
-    }
-  }
-
-  const hasActiveFilters =
-    searchTerm.trim() ||
-    selectedStatuses.length > 0 ||
-    locationFilter.trim() ||
-    dateRange;
-
+export default function WelcomePage() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <main className="min-h-screen bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       <Navbar />
 
-      {/* Search Bar */}
-      <div className="mx-auto max-w-7xl px-4 pb-2 pt-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
-            <Input
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search by title, description, or location..."
-              className="rounded-md border border-gray-300 bg-white pl-9 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400"
-            />
-          </div>
+      <section className="relative overflow-hidden border-b border-gray-200 bg-gradient-to-br from-white via-gray-50 to-red-50 px-6 py-20 dark:border-gray-800 dark:from-gray-900 dark:via-gray-900 dark:to-red-950/30 md:px-16">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <h1 className="font-heading text-5xl font-extrabold leading-tight tracking-tight text-gray-950 dark:text-white md:text-7xl">
+              Lost something at SDSU?
+              <span className="block text-[#C8102E]">Find it faster.</span>
+            </h1>
 
-          <Link href="/create-post" className="shrink-0">
-            <Button className="w-full bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Post
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Main 3-column layout */}
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)_390px]">
-        {/* Left — Filters */}
-        <aside className="h-fit rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:sticky lg:top-6 lg:self-start">
-          <h2 className="mb-4 font-heading text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-200">
-            Filters
-          </h2>
-
-          <div className="space-y-6">
-            {/* Status */}
-            <section>
-              <h3 className="mb-3 font-heading text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Status
-              </h3>
-
-              <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
-                <label className="flex cursor-pointer items-center gap-2 hover:text-[#C8102E]">
-                  <input
-                    type="checkbox"
-                    checked={selectedStatuses.includes("lost")}
-                    onChange={() => toggleStatusFilter("lost")}
-                    className="accent-[#C8102E]"
-                  />
-                  Lost
-                </label>
-
-                <label className="flex cursor-pointer items-center gap-2 hover:text-[#C8102E]">
-                  <input
-                    type="checkbox"
-                    checked={selectedStatuses.includes("found")}
-                    onChange={() => toggleStatusFilter("found")}
-                    className="accent-[#C8102E]"
-                  />
-                  Found
-                </label>
-              </div>
-            </section>
-
-            {/* Location */}
-            <section>
-              <label
-                htmlFor="locationFilter"
-                className="mb-3 block font-heading text-xs font-bold uppercase tracking-wide text-gray-500"
-              >
-                Location
-              </label>
-
-              <input
-                id="locationFilter"
-                type="text"
-                value={locationFilter}
-                onChange={(event) => setLocationFilter(event.target.value)}
-                placeholder="Library, Union..."
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
-              />
-            </section>
-
-            {/* Date */}
-            <section>
-              <label
-                htmlFor="dateRange"
-                className="mb-3 block font-heading text-xs font-bold uppercase tracking-wide text-gray-500"
-              >
-                Date
-              </label>
-
-              <select
-                id="dateRange"
-                value={dateRange}
-                onChange={(event) => setDateRange(event.target.value)}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-              >
-                <option value="">Any time</option>
-                <option value="today">Today</option>
-                <option value="7">Last 7 days</option>
-                <option value="30">Last 30 days</option>
-              </select>
-            </section>
-
-            {hasActiveFilters && (
-              <Button
-                type="button"
-                onClick={clearFilters}
-                className="w-full border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
-              >
-                Clear Filters
-              </Button>
-            )}
-
-            <p className="text-xs leading-5 text-gray-500 dark:text-gray-400">
-              Returned items are hidden from the home feed automatically.
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-gray-700 dark:text-gray-300">
+              Report lost items, browse found items, and safely message other
+              SDSU users to help return belongings across campus.
             </p>
+
+            <div className="mt-10 flex flex-col gap-4 sm:flex-row">
+              <Link href="/home">
+                <Button className="w-full bg-[#C8102E] px-6 py-6 font-heading text-base font-bold text-white hover:bg-[#a00d24] sm:w-auto">
+                  Browse Lost & Found
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
+
+              <Link href="/create-post">
+                <Button className="w-full border border-gray-300 bg-white px-6 py-6 font-heading text-base font-bold text-gray-900 hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 sm:w-auto">
+                  Report an Item
+                </Button>
+              </Link>
+            </div>
           </div>
-        </aside>
 
-        {/* Center — Feed */}
-        <main className="space-y-5">
-          {messageActionError && (
-            <section className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-              {messageActionError}
-            </section>
-          )}
-
-          {isLoading && (
-            <section className="rounded-xl border border-gray-200 bg-white px-8 py-16 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <p className="text-gray-600 dark:text-gray-300">Loading posts...</p>
-            </section>
-          )}
-
-          {!isLoading && errorMessage && (
-            <section className="rounded-xl border border-red-200 bg-red-50 px-8 py-16 text-center shadow-sm">
-              <p className="font-heading text-lg font-bold text-red-800">
-                {errorMessage}
-              </p>
-            </section>
-          )}
-
-          {!isLoading && !errorMessage && posts.length > 0 && (
-            <>
-              {posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  {...post}
-                  onMessageAboutItem={handleMessageAboutItem}
-                />
-              ))}
-            </>
-          )}
-
-          {!isLoading && !errorMessage && posts.length === 0 && (
-            <section className="flex min-h-[470px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white px-8 py-16 text-center shadow-sm dark:border-gray-600 dark:bg-gray-800">
-              <div className="max-w-md">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-[#C8102E] dark:bg-red-900/30">
-                  <PlusCircle size={34} />
+          <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-800">
+            <div className="rounded-2xl bg-gray-50 p-5 dark:bg-gray-900">
+              <div className="mb-5 flex items-center justify-between">
+                <div>
+                  <p className="font-heading text-sm font-bold text-gray-900 dark:text-gray-100">
+                    Recent Campus Reports
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Example preview
+                  </p>
                 </div>
 
-                <h1 className="mt-6 font-heading text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  No matching items found
-                </h1>
-
-                <p className="mt-4 text-base leading-7 text-gray-600 dark:text-gray-300">
-                  Try changing your search or filters. If you lost or found an
-                  item, you can also create a new post.
-                </p>
-
-                <Link href="/create-post">
-                  <Button className="mt-8 bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24]">
-                    Create a Post
-                  </Button>
-                </Link>
+                <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-[#C8102E] dark:bg-red-900/40">
+                  Live Feed
+                </span>
               </div>
-            </section>
-          )}
-        </main>
 
-        {/* Right — Messages */}
-        <aside className="lg:sticky lg:top-6 lg:self-start">
-          <ConversationPanel
-            activeConversationId={activeConversationId}
-            refreshKey={conversationRefreshKey}
-          />
-        </aside>
-      </div>
-    </div>
+              <div className="space-y-4">
+                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <div className="mb-3 h-28 rounded-lg bg-gray-200 dark:bg-gray-700" />
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-heading text-lg font-bold">
+                        Black Hydro Flask
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Love Library · Today
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-[#C8102E] px-3 py-1 text-xs font-bold text-white">
+                      Found
+                    </span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-heading text-lg font-bold">
+                        Red SDSU Backpack
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-500">
+                        Student Union · Yesterday
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-gray-900 px-3 py-1 text-xs font-bold text-white dark:bg-gray-700">
+                      Lost
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="px-6 py-16 md:px-16">
+        <div className="mx-auto max-w-7xl">
+          <div className="max-w-2xl">
+            <h2 className="font-heading text-4xl font-bold text-gray-950 dark:text-white">
+              How it works
+            </h2>
+
+            <p className="mt-4 text-lg leading-8 text-gray-600 dark:text-gray-300">
+              A simple process to help SDSU students and staff recover items
+              without needing multiple group chats or scattered posts.
+            </p>
+          </div>
+
+          <div className="mt-10 grid gap-6 md:grid-cols-4">
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-[#C8102E] dark:bg-red-900/30">
+                <PackageCheck />
+              </div>
+              <h3 className="font-heading text-xl font-bold">
+                Post an item
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                Create a lost or found report with a description, location, and
+                optional image.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-[#C8102E] dark:bg-red-900/30">
+                <Search />
+              </div>
+              <h3 className="font-heading text-xl font-bold">
+                Search reports
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                Browse active posts and filter by item type, location, or date.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-[#C8102E] dark:bg-red-900/30">
+                <MessageCircle />
+              </div>
+              <h3 className="font-heading text-xl font-bold">
+                Message safely
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                Contact the owner or finder directly through the built-in
+                conversation system.
+              </p>
+            </div>
+
+            <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-[#C8102E] dark:bg-red-900/30">
+                <ShieldCheck />
+              </div>
+              <h3 className="font-heading text-xl font-bold">
+                Return safely
+              </h3>
+              <p className="mt-3 text-sm leading-6 text-gray-600 dark:text-gray-300">
+                Keep item recovery organized and mark posts as returned once
+                they are resolved.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-gray-50 px-6 py-16 dark:bg-gray-800/50 md:px-16">
+        <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 rounded-3xl bg-[#C8102E] p-8 text-white shadow-lg md:flex-row md:items-center md:p-10">
+          <div>
+            <h2 className="font-heading text-3xl font-bold">
+              Ready to recover an item?
+            </h2>
+            <p className="mt-3 max-w-2xl text-white/85">
+              Start by browsing the feed or creating a report for something lost
+              or found on campus.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link href="/home">
+              <Button className="w-full bg-white font-heading font-bold text-[#C8102E] hover:bg-gray-100 sm:w-auto">
+                Browse Items
+              </Button>
+            </Link>
+
+            <Link href="/create-account">
+              <Button className="w-full border border-white/40 bg-transparent font-heading font-bold text-white hover:bg-white/10 sm:w-auto">
+                Create Account
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+    </main>
   );
 }
