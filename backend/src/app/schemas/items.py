@@ -54,3 +54,10 @@ class ItemListItem(BaseModel):
     image_url: str | None
     given_back: bool
     created_at: datetime
+
+class PaginatedItemsResponse(BaseModel):
+    items: list[ItemListItem]
+    page: int
+    page_size: int
+    total: int
+    total_pages: int

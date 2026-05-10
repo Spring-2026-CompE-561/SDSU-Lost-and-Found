@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Plus, PlusCircle, Search } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 
+const PAGE_SIZE = 5;
+
 type ItemPost = {
   id: number;
   user_id: number;
@@ -22,7 +24,13 @@ type ItemPost = {
   given_back: boolean;
   created_at: string;
 };
-
+type PaginatedItemsResponse = {
+  items: ItemPost[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
 type ReportType = "lost" | "found";
 type DraftConversation = {
   recipientId: number;
@@ -32,16 +40,16 @@ type DraftConversation = {
 
 export default function Home() {
   const router = useRouter();
-
   const [posts, setPosts] = useState<ItemPost[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatuses, setSelectedStatuses] = useState<ReportType[]>([]);
   const [locationFilter, setLocationFilter] = useState("");
   const [dateRange, setDateRange] = useState("");
-
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
-
   const [activeConversationId, setActiveConversationId] = useState<
     number | null
   >(null);
@@ -49,7 +57,8 @@ export default function Home() {
   const [messageActionError, setMessageActionError] = useState("");
   const [draftConversation, setDraftConversation] =
     useState<DraftConversation | null>(null);
-  useEffect(() => {
+  
+    useEffect(() => {
     const timeoutId = window.setTimeout(() => {
       async function fetchPosts() {
         try {
@@ -58,8 +67,8 @@ export default function Home() {
 
           const params = new URLSearchParams();
 
-          params.set("limit", "50");
-          params.set("offset", "0");
+          params.set("page", String(currentPage));
+          params.set("page_size", String(PAGE_SIZE));
           params.set("active_only", "true");
 
           const trimmedSearch = searchTerm.trim();
@@ -83,11 +92,13 @@ export default function Home() {
             params.set("report_type", selectedStatuses[0]);
           }
 
-          const data = await apiFetch<ItemPost[]>(
+          const data = await apiFetch<PaginatedItemsResponse>(
             `/api/v1/home/?${params.toString()}`,
           );
 
-          setPosts(data);
+          setPosts(data.items);
+          setTotalPages(data.total_pages);
+          setTotalItems(data.total);
         } catch {
           setErrorMessage("Could not connect to the backend server.");
         } finally {
@@ -99,9 +110,10 @@ export default function Home() {
     }, 300);
 
     return () => window.clearTimeout(timeoutId);
-  }, [searchTerm, selectedStatuses, locationFilter, dateRange]);
+  }, [searchTerm, selectedStatuses, locationFilter, dateRange, currentPage]);
 
-  function toggleStatusFilter(status: ReportType) {
+    function toggleStatusFilter(status: ReportType) {
+    setCurrentPage(1);
     setSelectedStatuses((currentStatuses) =>
       currentStatuses.includes(status)
         ? currentStatuses.filter((currentStatus) => currentStatus !== status)
@@ -110,11 +122,12 @@ export default function Home() {
   }
 
   function clearFilters() {
-    setSearchTerm("");
-    setSelectedStatuses([]);
-    setLocationFilter("");
-    setDateRange("");
-  }
+  setSearchTerm("");
+  setSelectedStatuses([]);
+  setLocationFilter("");
+  setDateRange("");
+  setCurrentPage(1);
+}
 
   function handleMessageAboutItem(
     ownerUserId: number,
@@ -161,7 +174,10 @@ export default function Home() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
             <Input
               value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
+              onChange={(event) => {
+                setSearchTerm(event.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Search by title, description, or location..."
               className="rounded-md border border-gray-300 bg-white pl-9 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400"
             />
@@ -227,7 +243,10 @@ export default function Home() {
                 id="locationFilter"
                 type="text"
                 value={locationFilter}
-                onChange={(event) => setLocationFilter(event.target.value)}
+                onChange={(event) => {
+                  setLocationFilter(event.target.value);
+                  setCurrentPage(1);
+                }}
                 placeholder="Library, Union..."
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
               />
@@ -245,7 +264,10 @@ export default function Home() {
               <select
                 id="dateRange"
                 value={dateRange}
-                onChange={(event) => setDateRange(event.target.value)}
+                onChange={(event) => {
+                  setDateRange(event.target.value);
+                  setCurrentPage(1);
+                }}
                 className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
               >
                 <option value="">Any time</option>
@@ -302,8 +324,48 @@ export default function Home() {
                   onMessageAboutItem={handleMessageAboutItem}
                 />
               ))}
+
+              <section className="rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Showing page{" "}
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                      {currentPage}
+                    </span>{" "}
+                    of{" "}
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                      {totalPages}
+                    </span>{" "}
+                    · {totalItems} matching posts
+                  </p>
+
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      disabled={currentPage <= 1}
+                      onClick={() =>
+                        setCurrentPage((page) => Math.max(1, page - 1))
+                      }
+                      className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+                    >
+                      Previous
+                    </Button>
+
+                    <Button
+                      type="button"
+                      disabled={currentPage >= totalPages}
+                      onClick={() =>
+                        setCurrentPage((page) => Math.min(totalPages, page + 1))
+                      }
+                      className="bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </section>
             </>
-          )}
+        )}
 
           {!isLoading && !errorMessage && posts.length === 0 && (
             <section className="flex min-h-[470px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white px-8 py-16 text-center shadow-sm dark:border-gray-600 dark:bg-gray-800">

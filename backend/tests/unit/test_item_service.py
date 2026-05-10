@@ -102,8 +102,60 @@ def test_list_items_active_only_false_includes_all(db):
     item_service.create_item(db, given_back, user.id)
     result = item_service.list_items(db, limit=10, offset=0, active_only=False)
     assert len(result) == 1
+    
+def test_list_items_paginated_returns_metadata(db):
+    user = _make_user(db)
 
+    for index in range(7):
+        item_service.create_item(
+            db,
+            ItemCreate(
+                title=f"Item {index}",
+                description="desc",
+                location="loc",
+                report_type="lost",
+            ),
+            user.id,
+        )
 
+    result = item_service.list_items_paginated(
+        db,
+        page=1,
+        page_size=5,
+        active_only=True,
+    )
+
+    assert len(result.items) == 5
+    assert result.page == 1
+    assert result.page_size == 5
+    assert result.total == 7
+    assert result.total_pages == 2
+def test_list_items_paginated_second_page(db):
+    user = _make_user(db)
+
+    for index in range(7):
+        item_service.create_item(
+            db,
+            ItemCreate(
+                title=f"Item {index}",
+                description="desc",
+                location="loc",
+                report_type="lost",
+            ),
+            user.id,
+        )
+
+    result = item_service.list_items_paginated(
+        db,
+        page=2,
+        page_size=5,
+        active_only=True,
+    )
+
+    assert len(result.items) == 2
+    assert result.page == 2
+    assert result.total == 7
+    assert result.total_pages == 2
 # ---------------------------------------------------------------------------
 # list_items_for_user
 # ---------------------------------------------------------------------------

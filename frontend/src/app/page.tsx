@@ -25,7 +25,13 @@ type ItemPost = {
   given_back: boolean;
   created_at: string;
 };
-
+type PaginatedItemsResponse = {
+  items: ItemPost[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -42,11 +48,11 @@ export default function WelcomePage() {
       try {
         setIsLoadingRecentPosts(true);
 
-        const data = await apiFetch<ItemPost[]>(
-          "/api/v1/home/?limit=10&offset=0&active_only=true",
+        const data = await apiFetch<PaginatedItemsResponse>(
+          "/api/v1/home/?page=1&page_size=10&active_only=true",
         );
 
-        const latestActivePosts = data
+        const latestActivePosts = data.items
           .filter((post) => !post.given_back)
           .sort(
             (a, b) =>

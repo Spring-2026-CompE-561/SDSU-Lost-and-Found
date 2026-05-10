@@ -1,8 +1,8 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
-
 from app.repository.item_repository import ItemRepository
-from app.schemas.items import ItemCreate, ItemUpdate
+from math import ceil
+from app.schemas.items import ItemCreate, ItemUpdate, PaginatedItemsResponse
 
 def list_items(
     db: Session,
@@ -25,6 +25,47 @@ def list_items(
         active_only=active_only,
     )
 
+def list_items_paginated(
+    db: Session,
+    page: int,
+    page_size: int,
+    search: str | None = None,
+    report_type: str | None = None,
+    location: str | None = None,
+    date_range: str | None = None,
+    active_only: bool = True,
+) -> PaginatedItemsResponse:
+    offset = (page - 1) * page_size
+
+    items = ItemRepository.list_filtered(
+        db=db,
+        limit=page_size,
+        offset=offset,
+        search=search,
+        report_type=report_type,
+        location=location,
+        date_range=date_range,
+        active_only=active_only,
+    )
+
+    total = ItemRepository.count_filtered(
+        db=db,
+        search=search,
+        report_type=report_type,
+        location=location,
+        date_range=date_range,
+        active_only=active_only,
+    )
+
+    total_pages = max(1, ceil(total / page_size)) if page_size else 1
+
+    return PaginatedItemsResponse(
+        items=items,
+        page=page,
+        page_size=page_size,
+        total=total,
+        total_pages=total_pages,
+    )
 def list_items_for_user(db: Session, current_user_id: int, limit: int, offset: int):
     return ItemRepository.list_for_user(db, current_user_id, limit, offset)
 

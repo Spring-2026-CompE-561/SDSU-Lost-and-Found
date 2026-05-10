@@ -132,7 +132,13 @@ class TestItemsFlow:
         """Home page fetches items without an auth token."""
         resp = client.get("/api/v1/home/")
         assert resp.status_code == 200
-        assert isinstance(resp.json(), list)
+        body = resp.json()
+        assert "items" in body
+        assert "page" in body
+        assert "page_size" in body
+        assert "total" in body
+        assert "total_pages" in body
+        assert isinstance(body["items"], list)
 
     def test_create_item_requires_auth(self, client):
         resp = client.post("/api/v1/home/", json={
@@ -169,7 +175,7 @@ class TestItemsFlow:
 
         resp = client.get("/api/v1/home/")
         assert resp.status_code == 200
-        titles = [i["title"] for i in resp.json()]
+        titles = [i["title"] for i in resp.json()["items"]]
         assert "Found Laptop" in titles
 
     def test_my_posts_returns_only_caller_items(self, client):
@@ -241,7 +247,61 @@ class TestItemsFlow:
         resp = client.get("/api/v1/home/99999")
         assert resp.status_code == 404
 
+    def test_list_items_supports_page_and_page_size(self, client):
+        auth = _signup_and_login(client, _USER_A)
 
+        for index in range(7):
+            client.post("/api/v1/home/", json={
+                "title": f"Paginated Item {index}",
+                "description": "desc",
+                "location": "loc",
+                "report_type": "lost",
+            }, headers=auth["headers"])
+
+        first_page = client.get("/api/v1/home/?page=1&page_size=5")
+        assert first_page.status_code == 200, first_page.text
+        first_body = first_page.json()
+
+        assert len(first_body["items"]) == 5
+        assert first_body["page"] == 1
+        assert first_body["page_size"] == 5
+        assert first_body["total"] == 7
+        assert first_body["total_pages"] == 2
+
+        second_page = client.get("/api/v1/home/?page=2&page_size=5")
+        assert second_page.status_code == 200, second_page.text
+        second_body = second_page.json()
+
+        assert len(second_body["items"]) == 2
+        assert second_body["page"] == 2
+        assert second_body["total"] == 7
+        assert second_body["total_pages"] == 2
+
+    def test_list_items_pagination_total_respects_search_filter(self, client):
+        auth = _signup_and_login(client, _USER_A)
+
+        client.post("/api/v1/home/", json={
+            "title": "Blue Backpack",
+            "description": "desc",
+            "location": "Library",
+            "report_type": "lost",
+        }, headers=auth["headers"])
+
+        client.post("/api/v1/home/", json={
+            "title": "Red Wallet",
+            "description": "desc",
+            "location": "Union",
+            "report_type": "lost",
+        }, headers=auth["headers"])
+
+        resp = client.get("/api/v1/home/?page=1&page_size=5&search=Backpack")
+        assert resp.status_code == 200, resp.text
+
+        body = resp.json()
+        assert body["total"] == 1
+        assert body["total_pages"] == 1
+        assert len(body["items"]) == 1
+        assert body["items"][0]["title"] == "Blue Backpack"
 # ---------------------------------------------------------------------------
 # User profile update flow  (mirrors: account/page.tsx)
 # ---------------------------------------------------------------------------
