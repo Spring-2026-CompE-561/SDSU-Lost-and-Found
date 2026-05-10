@@ -24,7 +24,7 @@ function LoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const redirectTo = searchParams.get("redirect") || "/";
+  const redirectTo = searchParams.get("redirect") || "/home";
 
   const SIGN_IN_MESSAGES: Record<string, string> = {
     "signin-required": "Please sign in to continue.",

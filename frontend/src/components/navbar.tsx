@@ -88,10 +88,10 @@ export default function Navbar() {
         {/* Nav links + dark mode toggle */}
         <div className="flex items-center gap-1 font-heading text-sm font-semibold sm:gap-3">
           <Link
-            href="/"
+            href="/home"
             className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] sm:inline"
           >
-            Home
+            Browse Items
           </Link>
 
           <Link

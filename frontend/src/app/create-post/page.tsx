@@ -121,7 +121,7 @@ export default function CreatePostPage() {
 
     setIsError(false);
     setMessage("Post created successfully. Redirecting to homepage...");
-    router.push("/");
+    router.push("/home");
     } catch (error) {
     setIsError(true);
     setMessage(getApiErrorMessage(error));

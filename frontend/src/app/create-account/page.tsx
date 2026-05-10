@@ -126,7 +126,7 @@ export default function CreateAccountPage() {
     setIsError(false);
     setMessage("Account created successfully. Redirecting to homepage.");
 
-    router.push("/");
+    router.push("/home");
   } catch (error) {
     setIsError(true);
     setMessage(getApiErrorMessage(error));
