@@ -1,0 +1,15 @@
+$kind: http-request
+name: Update Item Status
+description: Update item returned status.
+method: PUT
+url: '{{baseUrl}}/api/v1/home/{{itemId}}'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "given_back": true
+    }

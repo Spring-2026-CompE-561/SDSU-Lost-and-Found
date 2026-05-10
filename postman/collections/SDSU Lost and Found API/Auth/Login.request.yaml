@@ -1,0 +1,16 @@
+$kind: http-request
+name: Login
+description: Authenticate with email and password. Returns a short-lived access token (15 min) and a long-lived refresh token (7 days).
+method: POST
+url: '{{baseUrl}}/api/v1/user/login'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "email": "user@example.com",
+      "password": "Password1!"
+    }

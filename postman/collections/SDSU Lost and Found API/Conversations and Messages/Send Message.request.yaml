@@ -1,0 +1,15 @@
+$kind: http-request
+name: Send Message
+description: Send a new message in a conversation.
+method: POST
+url: '{{baseUrl}}/api/v1/conversations/{{conversationId}}/messages'
+order: 5000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "content": "Hello, is this item still available?"
+    }

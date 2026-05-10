@@ -1,0 +1,15 @@
+$kind: http-request
+name: Logout
+description: Revoke the refresh token. The access token will expire naturally after its 15-minute TTL.
+method: POST
+url: '{{baseUrl}}/api/v1/token/logout'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "refresh_token": "{{refreshToken}}"
+    }

@@ -1,337 +1,282 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import Navbar from "@/components/navbar";
-import PostCard from "@/components/post-card";
-import ConversationPanel from "@/components/conversation-panel";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, PlusCircle, Search } from "lucide-react";
-import { apiFetch, createConversation, getApiErrorMessage } from "@/lib/api";
+import { PlusCircle, Filter, X, Inbox } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import RightRail from "@/components/RightRail";
+import ItemCard from "@/components/ItemCard";
+import { Loader } from "@/components/ui/loader";
+import {
+  listItems,
+  getStoredUserId,
+  type ItemListItem,
+  ApiError,
+} from "@/lib/api";
 
-type ItemPost = {
-  id: number;
-  user_id: number;
-  title: string;
-  description: string;
-  location: string;
-  report_type: "lost" | "found";
-  image_url: string | null;
-  given_back: boolean;
-  created_at: string;
-};
+type StatusFilter = "all" | "active" | "returned";
 
-type ReportType = "lost" | "found";
-
-export default function Home() {
+function HomeContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialQuery = searchParams.get("q") ?? "";
+  const initialLocation = searchParams.get("location") ?? "";
+  const initialStatus =
+    (searchParams.get("status") as StatusFilter | null) ?? "all";
 
-  const [posts, setPosts] = useState<ItemPost[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedStatuses, setSelectedStatuses] = useState<ReportType[]>([]);
-  const [locationFilter, setLocationFilter] = useState("");
-  const [dateRange, setDateRange] = useState("");
-
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  const [activeConversationId, setActiveConversationId] = useState<
-    number | null
-  >(null);
-  const [conversationRefreshKey, setConversationRefreshKey] = useState(0);
-  const [messageActionError, setMessageActionError] = useState("");
+  const [items, setItems] = useState<ItemListItem[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState(initialQuery);
+  const [locationFilter, setLocationFilter] = useState(initialLocation);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(initialStatus);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      async function fetchPosts() {
-        try {
-          setIsLoading(true);
-          setErrorMessage("");
+    setCurrentUserId(getStoredUserId());
+  }, []);
 
-          const params = new URLSearchParams();
-
-          params.set("limit", "50");
-          params.set("offset", "0");
-          params.set("active_only", "true");
-
-          const trimmedSearch = searchTerm.trim();
-          const trimmedLocation = locationFilter.trim();
-
-          if (trimmedSearch) {
-            params.set("search", trimmedSearch);
-          }
-
-          if (trimmedLocation) {
-            params.set("location", trimmedLocation);
-          }
-
-          if (dateRange) {
-            params.set("date_range", dateRange);
-          }
-
-          // Backend accepts one report_type at a time.
-          // If both or none are selected, we show all active posts.
-          if (selectedStatuses.length === 1) {
-            params.set("report_type", selectedStatuses[0]);
-          }
-
-          const data = await apiFetch<ItemPost[]>(
-            `/api/v1/home/?${params.toString()}`,
-          );
-
-          setPosts(data);
-        } catch {
-          setErrorMessage("Could not connect to the backend server.");
-        } finally {
-          setIsLoading(false);
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError(null);
+    listItems(50, 0)
+      .then((data) => {
+        if (!mounted) return;
+        setItems(data);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        if (err instanceof ApiError) {
+          setError(err.message);
+        } else {
+          setError("Could not load posts. Is the backend running?");
         }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Client-side filtering — backend doesn't expose query params for these yet,
+  // so we filter the result of /home/ in the browser.
+  const filteredItems = useMemo(() => {
+    if (!items) return [];
+    const q = search.trim().toLowerCase();
+    return items.filter((it) => {
+      if (statusFilter === "active" && it.given_back) return false;
+      if (statusFilter === "returned" && !it.given_back) return false;
+      if (
+        locationFilter &&
+        !it.location.toLowerCase().includes(locationFilter.toLowerCase())
+      )
+        return false;
+      if (q) {
+        const hay = `${it.title} ${it.description} ${it.location}`.toLowerCase();
+        if (!hay.includes(q)) return false;
       }
+      return true;
+    });
+  }, [items, search, locationFilter, statusFilter]);
 
-      fetchPosts();
-    }, 300);
+  const updateUrlQuery = (
+    nextSearch: string,
+    nextLocation: string,
+    nextStatus: StatusFilter
+  ) => {
+    const params = new URLSearchParams();
+    if (nextSearch) params.set("q", nextSearch);
+    if (nextLocation) params.set("location", nextLocation);
+    if (nextStatus !== "all") params.set("status", nextStatus);
+    const qs = params.toString();
+    router.replace(`/home${qs ? `?${qs}` : ""}`, { scroll: false });
+  };
 
-    return () => window.clearTimeout(timeoutId);
-  }, [searchTerm, selectedStatuses, locationFilter, dateRange]);
+  const handleSearch = (q: string) => {
+    setSearch(q);
+    updateUrlQuery(q, locationFilter, statusFilter);
+  };
 
-  function toggleStatusFilter(status: ReportType) {
-    setSelectedStatuses((currentStatuses) =>
-      currentStatuses.includes(status)
-        ? currentStatuses.filter((currentStatus) => currentStatus !== status)
-        : [...currentStatuses, status],
-    );
-  }
-
-  function clearFilters() {
-    setSearchTerm("");
-    setSelectedStatuses([]);
+  const clearFilters = () => {
+    setSearch("");
     setLocationFilter("");
-    setDateRange("");
-  }
+    setStatusFilter("all");
+    router.replace("/home", { scroll: false });
+  };
 
-  async function handleMessageAboutItem(ownerUserId: number, itemId: number) {
-    const token = localStorage.getItem("token");
-    const storedUserId = localStorage.getItem("userId");
-    const currentUserId = storedUserId ? Number(storedUserId) : null;
-
-    if (!token) {
-      router.push("/login?message=signin-required-message&redirect=/home");
-      return;
-    }
-
-    if (currentUserId === ownerUserId) {
-      setMessageActionError("You cannot message yourself about your own post.");
-      return;
-    }
-
-    try {
-      setMessageActionError("");
-
-      const conversation = await createConversation(ownerUserId, itemId);
-
-      setActiveConversationId(conversation.id);
-      setConversationRefreshKey((currentKey) => currentKey + 1);
-    } catch (error) {
-      setMessageActionError(getApiErrorMessage(error));
-    }
-  }
-
-  const hasActiveFilters =
-    searchTerm.trim() ||
-    selectedStatuses.length > 0 ||
-    locationFilter.trim() ||
-    dateRange;
+  const hasActiveFilter =
+    !!search || !!locationFilter || statusFilter !== "all";
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Navbar />
+    <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)]">
+      <Navbar onSearch={handleSearch} initialSearch={search} />
 
-      {/* Search Bar */}
-      <div className="mx-auto max-w-7xl px-4 pb-2 pt-5">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400 dark:text-gray-500" />
-            <Input
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search by title, description, or location..."
-              className="rounded-md border border-gray-300 bg-white pl-9 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-400"
-            />
-          </div>
-
-          <Link href="/create-post" className="shrink-0">
-            <Button className="w-full bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] sm:w-auto">
-              <Plus className="mr-2 h-4 w-4" />
-              Create Post
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* Main 3-column layout */}
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 px-4 py-4 lg:grid-cols-[220px_minmax(0,1fr)_390px]">
-        {/* Left — Filters */}
-        <aside className="h-fit rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-800 lg:sticky lg:top-6 lg:self-start">
-          <h2 className="mb-4 font-heading text-sm font-bold uppercase tracking-wide text-gray-800 dark:text-gray-200">
-            Filters
-          </h2>
-
-          <div className="space-y-6">
-            {/* Status */}
-            <section>
-              <h3 className="mb-3 font-heading text-xs font-bold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                Status
-              </h3>
-
-              <div className="space-y-3 text-sm text-gray-700 dark:text-gray-300">
-                <label className="flex cursor-pointer items-center gap-2 hover:text-[#C8102E]">
-                  <input
-                    type="checkbox"
-                    checked={selectedStatuses.includes("lost")}
-                    onChange={() => toggleStatusFilter("lost")}
-                    className="accent-[#C8102E]"
-                  />
-                  Lost
-                </label>
-
-                <label className="flex cursor-pointer items-center gap-2 hover:text-[#C8102E]">
-                  <input
-                    type="checkbox"
-                    checked={selectedStatuses.includes("found")}
-                    onChange={() => toggleStatusFilter("found")}
-                    className="accent-[#C8102E]"
-                  />
-                  Found
-                </label>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-6">
+        <div className="flex gap-6">
+          {/* Main feed column */}
+          <main className="flex-1 min-w-0">
+            {/* Page header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+              <div>
+                <h1 className="text-2xl font-bold">Recent posts</h1>
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  Browse lost and found items posted by the SDSU community.
+                </p>
               </div>
-            </section>
-
-            {/* Location */}
-            <section>
-              <label
-                htmlFor="locationFilter"
-                className="mb-3 block font-heading text-xs font-bold uppercase tracking-wide text-gray-500"
+              <Link
+                href="/post/new"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[var(--sdsu-red)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--sdsu-red-dark)] transition-colors shadow-sm self-start"
               >
-                Location
-              </label>
+                <PlusCircle className="h-4 w-4" />
+                New post
+              </Link>
+            </div>
 
-              <input
-                id="locationFilter"
-                type="text"
-                value={locationFilter}
-                onChange={(event) => setLocationFilter(event.target.value)}
-                placeholder="Library, Union..."
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
-              />
-            </section>
-
-            {/* Date */}
-            <section>
-              <label
-                htmlFor="dateRange"
-                className="mb-3 block font-heading text-xs font-bold uppercase tracking-wide text-gray-500"
-              >
-                Date
-              </label>
-
-              <select
-                id="dateRange"
-                value={dateRange}
-                onChange={(event) => setDateRange(event.target.value)}
-                className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-              >
-                <option value="">Any time</option>
-                <option value="today">Today</option>
-                <option value="7">Last 7 days</option>
-                <option value="30">Last 30 days</option>
-              </select>
-            </section>
-
-            {hasActiveFilters && (
-              <Button
-                type="button"
-                onClick={clearFilters}
-                className="w-full border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
-              >
-                Clear Filters
-              </Button>
-            )}
-
-            <p className="text-xs leading-5 text-gray-500 dark:text-gray-400">
-              Returned items are hidden from the home feed automatically.
-            </p>
-          </div>
-        </aside>
-
-        {/* Center — Feed */}
-        <main className="space-y-5">
-          {messageActionError && (
-            <section className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-              {messageActionError}
-            </section>
-          )}
-
-          {isLoading && (
-            <section className="rounded-xl border border-gray-200 bg-white px-8 py-16 text-center shadow-sm dark:border-gray-700 dark:bg-gray-800">
-              <p className="text-gray-600 dark:text-gray-300">Loading posts...</p>
-            </section>
-          )}
-
-          {!isLoading && errorMessage && (
-            <section className="rounded-xl border border-red-200 bg-red-50 px-8 py-16 text-center shadow-sm">
-              <p className="font-heading text-lg font-bold text-red-800">
-                {errorMessage}
-              </p>
-            </section>
-          )}
-
-          {!isLoading && !errorMessage && posts.length > 0 && (
-            <>
-              {posts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  {...post}
-                  onMessageAboutItem={handleMessageAboutItem}
-                />
-              ))}
-            </>
-          )}
-
-          {!isLoading && !errorMessage && posts.length === 0 && (
-            <section className="flex min-h-[470px] items-center justify-center rounded-xl border border-dashed border-gray-300 bg-white px-8 py-16 text-center shadow-sm dark:border-gray-600 dark:bg-gray-800">
-              <div className="max-w-md">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-[#C8102E] dark:bg-red-900/30">
-                  <PlusCircle size={34} />
+            {/* Filters */}
+            <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 mb-4 shadow-sm">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5 text-sm font-medium text-[var(--foreground)] pr-2">
+                  <Filter className="h-4 w-4" />
+                  Filters
                 </div>
 
-                <h1 className="mt-6 font-heading text-3xl font-bold text-gray-900 dark:text-gray-100">
-                  No matching items found
-                </h1>
+                {/* Status pills */}
+                <div className="inline-flex rounded-lg border border-[var(--border)] p-0.5">
+                  {(["all", "active", "returned"] as StatusFilter[]).map(
+                    (s) => (
+                      <button
+                        key={s}
+                        onClick={() => {
+                          setStatusFilter(s);
+                          updateUrlQuery(search, locationFilter, s);
+                        }}
+                        className={`px-3 py-1 text-xs font-medium rounded-md capitalize transition-colors ${
+                          statusFilter === s
+                            ? "bg-[var(--sdsu-red)] text-white"
+                            : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                        }`}
+                      >
+                        {s}
+                      </button>
+                    )
+                  )}
+                </div>
 
-                <p className="mt-4 text-base leading-7 text-gray-600 dark:text-gray-300">
-                  Try changing your search or filters. If you lost or found an
-                  item, you can also create a new post.
-                </p>
+                {/* Location filter */}
+                <input
+                  type="text"
+                  value={locationFilter}
+                  onChange={(e) => {
+                    setLocationFilter(e.target.value);
+                    updateUrlQuery(search, e.target.value, statusFilter);
+                  }}
+                  placeholder="Filter by location…"
+                  className="flex-1 min-w-0 max-w-xs rounded-md border border-[var(--border)] bg-[var(--background)] px-3 py-1.5 text-xs placeholder:text-[var(--muted-foreground)] focus:border-[var(--sdsu-red)] focus:outline-none focus:ring-2 focus:ring-[var(--sdsu-red)]/30"
+                />
 
-                <Link href="/create-post">
-                  <Button className="mt-8 bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24]">
-                    Create a Post
-                  </Button>
-                </Link>
+                {hasActiveFilter && (
+                  <button
+                    onClick={clearFilters}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
+                  >
+                    <X className="h-3 w-3" />
+                    Clear
+                  </button>
+                )}
               </div>
-            </section>
-          )}
-        </main>
+            </div>
 
-        {/* Right — Messages */}
-        <aside className="lg:sticky lg:top-6 lg:self-start">
-          <ConversationPanel
-            activeConversationId={activeConversationId}
-            refreshKey={conversationRefreshKey}
-          />
-        </aside>
+            {/* Result count */}
+            {!loading && !error && items && (
+              <p className="text-xs text-[var(--muted-foreground)] mb-3">
+                Showing <strong>{filteredItems.length}</strong> of{" "}
+                {items.length} {items.length === 1 ? "post" : "posts"}
+              </p>
+            )}
+
+            {/* Feed body */}
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader />
+              </div>
+            ) : error ? (
+              <div className="rounded-xl border border-[var(--destructive)]/30 bg-[var(--destructive)]/5 p-6 text-center">
+                <p className="text-sm font-medium text-[var(--destructive)]">
+                  {error}
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="mt-3 text-sm font-medium underline text-[var(--destructive)]"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : filteredItems.length === 0 ? (
+              <EmptyState hasFilter={hasActiveFilter} />
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {filteredItems.map((item) => (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    ownedByCurrentUser={
+                      "user_id" in item &&
+                      currentUserId !== null &&
+                      (item as { user_id: number }).user_id === currentUserId
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </main>
+
+          {/* Right sidebar */}
+          <RightRail />
+        </div>
       </div>
     </div>
+  );
+}
+
+function EmptyState({ hasFilter }: { hasFilter: boolean }) {
+  return (
+    <div className="rounded-xl border border-dashed border-[var(--border)] bg-[var(--card)] p-12 text-center">
+      <div className="mx-auto inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--sdsu-red)]/10 text-[var(--sdsu-red)] mb-4">
+        <Inbox className="h-6 w-6" />
+      </div>
+      <h3 className="text-lg font-semibold mb-1">
+        {hasFilter ? "No posts match your filters" : "No posts yet"}
+      </h3>
+      <p className="text-sm text-[var(--muted-foreground)] max-w-md mx-auto mb-4">
+        {hasFilter
+          ? "Try clearing the filters or broadening your search."
+          : "Be the first one to post about a lost or found item on campus."}
+      </p>
+      <Link
+        href="/post/new"
+        className="inline-flex items-center gap-2 rounded-lg bg-[var(--sdsu-red)] px-4 py-2 text-sm font-semibold text-white hover:bg-[var(--sdsu-red-dark)] transition-colors"
+      >
+        <PlusCircle className="h-4 w-4" />
+        Create a post
+      </Link>
+    </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader />
+        </div>
+      }
+    >
+      <HomeContent />
+    </Suspense>
   );
 }

@@ -1,0 +1,11 @@
+$kind: http-request
+name: List Items
+description: List item posts in the database.
+method: GET
+url: '{{baseUrl}}/api/v1/home/'
+order: 1000
+queryParams:
+  - key: limit
+    value: '50'
+  - key: offset
+    value: '0'

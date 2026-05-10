@@ -1,0 +1,6 @@
+$kind: http-request
+name: Get User
+description: "Retrieve a user's public profile."
+method: GET
+url: '{{baseUrl}}/api/v1/user/{{userId}}'
+order: 1000

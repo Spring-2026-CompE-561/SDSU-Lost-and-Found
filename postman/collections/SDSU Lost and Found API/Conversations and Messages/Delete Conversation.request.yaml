@@ -1,0 +1,6 @@
+$kind: http-request
+name: Delete Conversation
+description: Delete a conversation and all its messages.
+method: DELETE
+url: '{{baseUrl}}/api/v1/conversations/{{conversationId}}'
+order: 3000

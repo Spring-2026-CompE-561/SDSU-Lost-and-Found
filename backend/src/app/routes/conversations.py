@@ -1,9 +1,18 @@
-"""
-Conversation routes.
-
-These routes use the logged-in user's JWT token to determine current_user_id.
-"""
-
+# ============================================================
+# Notes:
+# 
+# current_user_id is hardcoded to 1 for testing purposes.
+#
+#
+# 
+#
+#
+#
+#
+#
+#
+#
+# ============================================================
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
@@ -28,52 +37,33 @@ DB = Annotated[Session, Depends(get_db)]
 CurrentUserId = Annotated[int, Depends(get_current_user_id)]
 
 
+
+
+
+
+
 # POST /conversations/
-@api_router.post("/", response_model=ConversationOut)
-def create_conversation(
-    body: ConversationCreate,
-    db: DB,
-    current_user_id: CurrentUserId,
-):
-    """Create or find a conversation between the logged-in user and another user."""
-    return conversation_service.get_or_create_conversation(
-        db,
-        current_user_id,
-        body.recipient_id,
-        body.item_id,
-    )
+@api_router.post("/", response_model=ConversationOut)       # response schema 
+def create_conversation(body: ConversationCreate, db: DB):  # input schema
+ #   Create or find a conversation between two users.
+    current_user_id = 1
+    return conversation_service.get_or_create_conversation(db, current_user_id, body.recipient_id)
 
 
 # GET /conversations/
 @api_router.get("/", response_model=list[ConversationListItem])
-def list_conversations(
-    db: DB,
-    current_user_id: CurrentUserId,
-    limit: int = Query(50, ge=1),
-    offset: int = Query(0, ge=0),
-):
-    """List all active conversations for the logged-in user."""
-    return conversation_service.list_conversations(
-        db,
-        current_user_id,
-        limit,
-        offset,
-    )
+def list_conversations(db: DB, limit: int = Query(50, ge=1), offset: int = Query(0, ge=0)):
+ #  List all active conversations for the logged-in user.
+    current_user_id = 1
+    return conversation_service.list_conversations(db, current_user_id, limit, offset)
 
 
 # DELETE /conversations/{conversation_id}
 @api_router.delete("/{conversation_id}", response_model=SuccessResponse)
-def delete_conversation(
-    conversation_id: int,
-    db: DB,
-    current_user_id: CurrentUserId,
-):
-    """Delete a conversation if the logged-in user is a participant."""
-    conversation_service.delete_conversation(
-        db,
-        current_user_id,
-        conversation_id,
-    )
+def delete_conversation(conversation_id: int, db: DB):
+#    Delete a conversation and all its messages.
+    current_user_id = 1
+    conversation_service.delete_conversation(db, current_user_id, conversation_id)
     return SuccessResponse()
 
 
@@ -86,16 +76,11 @@ def get_messages(
     limit: int = Query(50, ge=1),
     offset: int = Query(0, ge=0),
 ):
-    """Retrieve message history for a conversation."""
-    return chat_service.get_messages(
-        db,
-        current_user_id,
-        conversation_id,
-        limit,
-        offset,
-    )
-
-
+ #   Retrieve message history for a conversation.
+    current_user_id = 1
+    return chat_service.get_messages(db, current_user_id, conversation_id, limit, offset)
+ 
+ 
 # POST /conversations/{conversation_id}/messages
 @api_router.post("/{conversation_id}/messages", response_model=MessageOut)
 def send_message(
@@ -104,10 +89,6 @@ def send_message(
     db: DB,
     current_user_id: CurrentUserId,
 ):
-    """Send a new message in a conversation."""
-    return chat_service.send_message(
-        db,
-        current_user_id,
-        conversation_id,
-        body.content,
-    )
+#    Send a new message in a conversation.
+    current_user_id = 1
+    return chat_service.send_message(db, current_user_id, conversation_id, body.content)

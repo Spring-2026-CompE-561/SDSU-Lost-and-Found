@@ -1,0 +1,6 @@
+$kind: collection
+name: SDSU Lost and Found API
+description: API collection for the SDSU Campus Lost and Found web application. Covers authentication, user management, lost/found items, conversations, and messaging.
+variables:
+  - key: baseUrl
+    value: 'http://localhost:8000'

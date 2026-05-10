@@ -1,0 +1,19 @@
+$kind: http-request
+name: Create Item
+description: Create a lost/found item post.
+method: POST
+url: '{{baseUrl}}/api/v1/home/'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Lost Backpack",
+      "description": "Black Jansport backpack with laptop inside",
+      "location": "Library 2nd Floor",
+      "image_url": null,
+      "given_back": false
+    }

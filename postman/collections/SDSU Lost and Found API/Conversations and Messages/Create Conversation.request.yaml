@@ -1,0 +1,15 @@
+$kind: http-request
+name: Create Conversation
+description: Create or find a conversation between two users.
+method: POST
+url: '{{baseUrl}}/api/v1/conversations/'
+order: 1000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "recipient_id": 2
+    }
