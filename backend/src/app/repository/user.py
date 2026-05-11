@@ -8,6 +8,9 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.user import UserCreate
 
+def normalize_email(email: str) -> str:
+    """Lowercase and trim an email address while keeping dots meaningful."""
+    return email.strip().lower()
 
 class UserRepository:
     """Repository for user data access."""
@@ -15,16 +18,13 @@ class UserRepository:
     @staticmethod
     def get_by_email(db: Session, email: str) -> User | None:
         """
-        Get user by email.
+        Get user by normalized email.
 
-        Args:
-            db: Database session
-            email: User email
-
-        Returns:
-            User | None: User if found, None otherwise
+        Dots are kept meaningful:
+        user1@sdsu.edu and user.1@sdsu.edu are different emails.
         """
-        return db.query(User).filter(User.email == email).first()
+        normalized_email = normalize_email(email)
+        return db.query(User).filter(User.email == normalized_email).first()
 
     @staticmethod
     def get_by_id(db: Session, user_id: int) -> User | None:
@@ -54,7 +54,7 @@ class UserRepository:
             User: Created user
         """
         db_user = User(
-            email=user.email,
+            email=normalize_email(str(user.email)),
             password_hash=hashed_password,  # matches User model column name
             first_name=user.first_name,
             last_name=user.last_name,

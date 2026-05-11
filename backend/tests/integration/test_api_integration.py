@@ -119,7 +119,39 @@ class TestAuthFlow:
         """Unauthenticated requests to protected routes get 401/403."""
         resp = client.get("/api/v1/home/my-posts")
         assert resp.status_code in (401, 403)
+    def test_signup_allows_dot_variant_as_different_email(self, client):
+        first = client.post("/api/v1/user/signup", json={
+            "first_name": "Alan",
+            "last_name": "User",
+            "email": "user1@sdsu.edu",
+            "password": "TestPass1!",
+        })
+        assert first.status_code == 201
 
+        second = client.post("/api/v1/user/signup", json={
+            "first_name": "Other",
+            "last_name": "User",
+            "email": "u.ser1@sdsu.edu",
+            "password": "TestPass1!",
+        })
+        assert second.status_code == 201
+
+
+    def test_login_dot_variant_fails_for_different_email(self, client):
+        signup = client.post("/api/v1/user/signup", json={
+            "first_name": "Alan",
+            "last_name": "User",
+            "email": "user1@sdsu.edu",
+            "password": "TestPass1!",
+        })
+        assert signup.status_code == 201
+
+        login = client.post("/api/v1/user/login", json={
+            "email": "u.ser1@sdsu.edu",
+            "password": "TestPass1!",
+        })
+
+        assert login.status_code == 401
 
 # ---------------------------------------------------------------------------
 # Items flow  (mirrors: home/page.tsx → GET /home/, POST /home/, etc.)
@@ -132,7 +164,13 @@ class TestItemsFlow:
         """Home page fetches items without an auth token."""
         resp = client.get("/api/v1/home/")
         assert resp.status_code == 200
-        assert isinstance(resp.json(), list)
+        body = resp.json()
+        assert "items" in body
+        assert "page" in body
+        assert "page_size" in body
+        assert "total" in body
+        assert "total_pages" in body
+        assert isinstance(body["items"], list)
 
     def test_create_item_requires_auth(self, client):
         resp = client.post("/api/v1/home/", json={
@@ -169,7 +207,7 @@ class TestItemsFlow:
 
         resp = client.get("/api/v1/home/")
         assert resp.status_code == 200
-        titles = [i["title"] for i in resp.json()]
+        titles = [i["title"] for i in resp.json()["items"]]
         assert "Found Laptop" in titles
 
     def test_my_posts_returns_only_caller_items(self, client):
@@ -241,7 +279,61 @@ class TestItemsFlow:
         resp = client.get("/api/v1/home/99999")
         assert resp.status_code == 404
 
+    def test_list_items_supports_page_and_page_size(self, client):
+        auth = _signup_and_login(client, _USER_A)
 
+        for index in range(7):
+            client.post("/api/v1/home/", json={
+                "title": f"Paginated Item {index}",
+                "description": "desc",
+                "location": "loc",
+                "report_type": "lost",
+            }, headers=auth["headers"])
+
+        first_page = client.get("/api/v1/home/?page=1&page_size=5")
+        assert first_page.status_code == 200, first_page.text
+        first_body = first_page.json()
+
+        assert len(first_body["items"]) == 5
+        assert first_body["page"] == 1
+        assert first_body["page_size"] == 5
+        assert first_body["total"] == 7
+        assert first_body["total_pages"] == 2
+
+        second_page = client.get("/api/v1/home/?page=2&page_size=5")
+        assert second_page.status_code == 200, second_page.text
+        second_body = second_page.json()
+
+        assert len(second_body["items"]) == 2
+        assert second_body["page"] == 2
+        assert second_body["total"] == 7
+        assert second_body["total_pages"] == 2
+
+    def test_list_items_pagination_total_respects_search_filter(self, client):
+        auth = _signup_and_login(client, _USER_A)
+
+        client.post("/api/v1/home/", json={
+            "title": "Blue Backpack",
+            "description": "desc",
+            "location": "Library",
+            "report_type": "lost",
+        }, headers=auth["headers"])
+
+        client.post("/api/v1/home/", json={
+            "title": "Red Wallet",
+            "description": "desc",
+            "location": "Union",
+            "report_type": "lost",
+        }, headers=auth["headers"])
+
+        resp = client.get("/api/v1/home/?page=1&page_size=5&search=Backpack")
+        assert resp.status_code == 200, resp.text
+
+        body = resp.json()
+        assert body["total"] == 1
+        assert body["total_pages"] == 1
+        assert len(body["items"]) == 1
+        assert body["items"][0]["title"] == "Blue Backpack"
 # ---------------------------------------------------------------------------
 # User profile update flow  (mirrors: account/page.tsx)
 # ---------------------------------------------------------------------------
@@ -267,7 +359,54 @@ class TestUserProfileFlow:
         client.post("/api/v1/user/signup", json=_USER_A)
         resp = client.post("/api/v1/user/signup", json=_USER_A)
         assert resp.status_code == 400
+    def test_delete_current_user_requires_auth(self, client):
+        resp = client.delete("/api/v1/user/me")
+        assert resp.status_code in (401, 403)
 
+
+    def test_delete_current_user_removes_account(self, client):
+        auth = _signup_and_login(client, _USER_A)
+
+        delete = client.delete("/api/v1/user/me", headers=auth["headers"])
+        assert delete.status_code == 200
+        assert delete.json()["success"] is True
+
+        get = client.get(f"/api/v1/user/{auth['user_id']}")
+        assert get.status_code == 404
+
+
+    def test_deleted_user_can_no_longer_login(self, client):
+        auth = _signup_and_login(client, _USER_A)
+
+        delete = client.delete("/api/v1/user/me", headers=auth["headers"])
+        assert delete.status_code == 200
+
+        login = client.post("/api/v1/user/login", json={
+            "email": _USER_A["email"],
+            "password": _USER_A["password"],
+        })
+
+        assert login.status_code == 401
+
+
+    def test_delete_current_user_removes_their_posts(self, client):
+        auth = _signup_and_login(client, _USER_A)
+
+        create = client.post("/api/v1/home/", json={
+            "title": "Item to Delete",
+            "description": "desc",
+            "location": "Library",
+            "report_type": "lost",
+        }, headers=auth["headers"])
+        assert create.status_code == 200
+
+        item_id = create.json()["id"]
+
+        delete = client.delete("/api/v1/user/me", headers=auth["headers"])
+        assert delete.status_code == 200
+
+        get_item = client.get(f"/api/v1/home/{item_id}")
+        assert get_item.status_code == 404
 # ---------------------------------------------------------------------------
 # Conversation flow  (mirrors: Message About Item → send first message)
 # ---------------------------------------------------------------------------

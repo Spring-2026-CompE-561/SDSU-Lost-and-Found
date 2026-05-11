@@ -20,10 +20,8 @@ class ItemRepository:
             .all()
         )
     @staticmethod
-    def list_filtered(
+    def _build_filtered_query(
         db: Session,
-        limit: int = 50,
-        offset: int = 0,
         search: str | None = None,
         report_type: str | None = None,
         location: str | None = None,
@@ -75,12 +73,52 @@ class ItemRepository:
             if start_date is not None:
                 query = query.filter(Item.created_at >= start_date)
 
+        return query
+    @staticmethod
+    def list_filtered(
+        db: Session,
+        limit: int = 50,
+        offset: int = 0,
+        search: str | None = None,
+        report_type: str | None = None,
+        location: str | None = None,
+        date_range: str | None = None,
+        active_only: bool = True,
+    ):
+        query = ItemRepository._build_filtered_query(
+            db=db,
+            search=search,
+            report_type=report_type,
+            location=location,
+            date_range=date_range,
+            active_only=active_only,
+        )
+
         return (
             query.order_by(Item.created_at.desc())
             .offset(offset)
             .limit(limit)
             .all()
         )
+    @staticmethod
+    def count_filtered(
+        db: Session,
+        search: str | None = None,
+        report_type: str | None = None,
+        location: str | None = None,
+        date_range: str | None = None,
+        active_only: bool = True,
+    ) -> int:
+        query = ItemRepository._build_filtered_query(
+            db=db,
+            search=search,
+            report_type=report_type,
+            location=location,
+            date_range=date_range,
+            active_only=active_only,
+        )
+
+        return query.count()
     @staticmethod
     def list_for_user(db: Session, user_id: int, limit: int = 50, offset: int = 0):
         return (

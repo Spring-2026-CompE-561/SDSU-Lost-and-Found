@@ -11,6 +11,7 @@ from app.schemas.items import (
     ItemListItem,
     ItemOut,
     ItemUpdate,
+    PaginatedItemsResponse,
     ReportType,
     SuccessResponse,
 )
@@ -23,22 +24,22 @@ CurrentUserId = Annotated[int, Depends(get_current_user_id)]
 
 
 # GET /home
-@api_router.get("/", response_model=list[ItemListItem])
+@api_router.get("/", response_model=PaginatedItemsResponse)
 def list_items(
     db: DB,
-    limit: int = Query(50, ge=1),
-    offset: int = Query(0, ge=0),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(5, ge=1, le=50),
     search: str | None = Query(None, min_length=1),
     report_type: ReportType | None = Query(None),
     location: str | None = Query(None, min_length=1),
     date_range: Literal["today", "7", "30"] | None = Query(None),
     active_only: bool = Query(True),
 ):
-    """List item posts with optional search and filters."""
-    return item_service.list_items(
+    """List item posts with optional search, filters, and pagination."""
+    return item_service.list_items_paginated(
         db=db,
-        limit=limit,
-        offset=offset,
+        page=page,
+        page_size=page_size,
         search=search,
         report_type=report_type,
         location=location,

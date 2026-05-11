@@ -26,6 +26,15 @@ type ItemPost = {
   given_back: boolean;
   created_at: string;
 };
+<<<<<<< HEAD
+type PaginatedItemsResponse = {
+  items: ItemPost[];
+  page: number;
+  page_size: number;
+  total: number;
+  total_pages: number;
+};
+=======
 
 function makePatternBg(bgColor: string, textColor: string) {
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='80'><text x='0' y='62' font-family='Arial Black,Arial,sans-serif' font-size='54' font-weight='900' letter-spacing='4' fill='${textColor}'>SAN DIEGO STATE UNIVERSITY</text></svg>`;
@@ -39,6 +48,7 @@ function makePatternBg(bgColor: string, textColor: string) {
 const lightPatternBg = makePatternBg("#C8102E", "#a50d24");
 const darkPatternBg = makePatternBg("#0a0a0a", "#242424");
 
+>>>>>>> 3eadd4c873542b934916467f55e884daf1b76143
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -68,11 +78,11 @@ export default function WelcomePage() {
       try {
         setIsLoadingRecentPosts(true);
 
-        const data = await apiFetch<ItemPost[]>(
-          "/api/v1/home/?limit=10&offset=0&active_only=true",
+        const data = await apiFetch<PaginatedItemsResponse>(
+          "/api/v1/home/?page=1&page_size=10&active_only=true",
         );
 
-        const latestActivePosts = data
+        const latestActivePosts = data.items
           .filter((post) => !post.given_back)
           .sort(
             (a, b) =>

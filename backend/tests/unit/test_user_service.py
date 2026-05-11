@@ -61,7 +61,78 @@ def test_login_unknown_email_raises_401(db):
         UserService.login(db, "nobody@sdsu.edu", "TestPass1!")
     assert exc_info.value.status_code == 401
 
+def test_signup_stores_email_lowercase(db):
+    user = UserService.signup(
+        db,
+        UserCreate(
+            first_name="Alan",
+            last_name="User",
+            email="Alan@SDSU.edu",
+            password="TestPass1!",
+        ),
+    )
 
+    assert user.email == "alan@sdsu.edu"
+
+
+def test_signup_allows_dot_variant_as_different_email(db):
+    first = UserService.signup(
+        db,
+        UserCreate(
+            first_name="Alan",
+            last_name="User",
+            email="user1@sdsu.edu",
+            password="TestPass1!",
+        ),
+    )
+
+    second = UserService.signup(
+        db,
+        UserCreate(
+            first_name="Other",
+            last_name="User",
+            email="u.ser1@sdsu.edu",
+            password="TestPass1!",
+        ),
+    )
+
+    assert first.id != second.id
+    assert first.email == "user1@sdsu.edu"
+    assert second.email == "u.ser1@sdsu.edu"
+
+
+def test_login_accepts_uppercase_email(db):
+    created = UserService.signup(
+        db,
+        UserCreate(
+            first_name="Alan",
+            last_name="User",
+            email="user1@sdsu.edu",
+            password="TestPass1!",
+        ),
+    )
+
+    token, user_id = UserService.login(db, "User1@SDSU.edu", "TestPass1!")
+
+    assert isinstance(token, str)
+    assert user_id == created.id
+
+
+def test_login_dot_variant_fails_for_different_email(db):
+    UserService.signup(
+        db,
+        UserCreate(
+            first_name="Alan",
+            last_name="User",
+            email="user1@sdsu.edu",
+            password="TestPass1!",
+        ),
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
+        UserService.login(db, "u.ser1@sdsu.edu", "TestPass1!")
+
+    assert exc_info.value.status_code == 401
 # ---------------------------------------------------------------------------
 # get_user
 # ---------------------------------------------------------------------------

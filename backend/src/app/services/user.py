@@ -16,7 +16,7 @@ from app.core.auth import (
     verify_token,
 )
 from app.models.user import User
-from app.repository.user import UserRepository
+from app.repository.user import UserRepository, normalize_email
 from app.schemas.user import UserCreate, UserUpdate
 
 
@@ -38,7 +38,7 @@ class UserService:
         Raises:
             HTTPException 400: If email is already registered
         """
-        existing = UserRepository.get_by_email(db, body.email)
+        existing = UserRepository.get_by_email(db, str(body.email))
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -64,7 +64,7 @@ class UserService:
         Raises:
             HTTPException 401: If credentials are invalid
         """
-        user = UserRepository.get_by_email(db, email)
+        user = UserRepository.get_by_email(db, normalize_email(email))
         if not user or not verify_password(password, user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -124,14 +124,18 @@ class UserService:
                 detail="User not found.",
             )
 
-        if body.email and body.email != user.email:
-            conflict = UserRepository.get_by_email(db, body.email)
-            if conflict:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="That email is already in use.",
-                )
-            user.email = body.email
+        if body.email:
+            normalized_email = normalize_email(str(body.email))
+
+            if normalized_email != user.email:
+                conflict = UserRepository.get_by_email(db, normalized_email)
+
+                if conflict and conflict.id != user.id:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="That email is already in use.",
+                    )
+                user.email = normalized_email
 
         if body.first_name is not None:
             user.first_name = body.first_name
@@ -151,7 +155,7 @@ class UserService:
         Raises:
             HTTPException 404: If no account exists for that email
         """
-        user = UserRepository.get_by_email(db, email)
+        user = UserRepository.get_by_email(db, normalize_email(email))
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
