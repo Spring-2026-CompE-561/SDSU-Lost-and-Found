@@ -292,14 +292,14 @@ export default function MyPostsPanel() {
 
   return (
     <>
-      <section className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-gray-100 pb-6 md:flex-row md:items-center md:justify-between">
+      <section className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex flex-col gap-4 border-b border-gray-100 pb-6 md:flex-row md:items-center md:justify-between dark:border-gray-700">
           <div>
-            <h2 className="font-heading text-2xl font-bold text-gray-900">
+            <h2 className="font-heading text-2xl font-bold text-gray-900 dark:text-gray-100">
               My Posts
             </h2>
 
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Manage the lost and found posts created by your account.
             </p>
           </div>
@@ -326,7 +326,7 @@ export default function MyPostsPanel() {
 
         {isLoading && (
           <div className="flex min-h-44 items-center justify-center text-center">
-            <p className="text-sm text-gray-600">Loading your posts...</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Loading your posts...</p>
           </div>
         )}
 
@@ -335,11 +335,11 @@ export default function MyPostsPanel() {
             <div>
               <PackageOpen className="mx-auto h-12 w-12 text-[#C8102E]" />
 
-              <h3 className="mt-4 font-heading text-xl font-bold text-gray-900">
+              <h3 className="mt-4 font-heading text-xl font-bold text-gray-900 dark:text-gray-100">
                 No posts yet
               </h3>
 
-              <p className="mt-3 max-w-md text-sm leading-6 text-gray-600">
+              <p className="mt-3 max-w-md text-sm leading-6 text-gray-600 dark:text-gray-400">
                 Once you create a lost or found item post, it will appear here so
                 you can manage it.
               </p>
@@ -356,12 +356,12 @@ export default function MyPostsPanel() {
               return (
                 <article
                   key={post.id}
-                  className="rounded-xl border border-gray-200 bg-gray-50 p-5"
+                  className="rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-700/50"
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-heading text-xl font-bold text-gray-900">
+                        <h3 className="font-heading text-xl font-bold text-gray-900 dark:text-gray-100">
                           {post.title}
                         </h3>
 
@@ -380,12 +380,12 @@ export default function MyPostsPanel() {
                         )}
                       </div>
 
-                      <p className="mt-2 flex items-center gap-1 text-xs text-gray-500">
+                      <p className="mt-2 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                         <MapPin size={14} />
                         {post.location} · {formatDate(post.created_at)}
                       </p>
 
-                      <p className="mt-4 text-sm leading-6 text-gray-700">
+                      <p className="mt-4 text-sm leading-6 text-gray-700 dark:text-gray-300">
                         {post.description}
                       </p>
                     </div>
@@ -424,7 +424,7 @@ export default function MyPostsPanel() {
                       type="button"
                       disabled={isBusy}
                       onClick={() => openEditModal(post)}
-                      className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-100 dark:hover:bg-gray-500"
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit Post
@@ -434,7 +434,7 @@ export default function MyPostsPanel() {
                       type="button"
                       disabled={isBusy}
                       onClick={() => handleDeletePost(post.id)}
-                      className="border border-red-200 bg-white font-heading font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-red-200 bg-white font-heading font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900 dark:bg-gray-600 dark:text-red-400 dark:hover:bg-gray-500"
                     >
                       <Trash2 className="mr-2 h-4 w-4" />
                       Delete Post
@@ -449,15 +449,15 @@ export default function MyPostsPanel() {
 
       {editingPost && (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-6 md:items-center">
-          <div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-xl">
+          <div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-800">
             <div className="modal-scrollbar mr-2 max-h-[90vh] overflow-y-auto p-5 pr-7">
-              <div className="flex items-start justify-between border-b border-gray-100 pb-4">
+              <div className="flex items-start justify-between border-b border-gray-100 pb-4 dark:border-gray-700">
               <div>
-                <h2 className="font-heading text-2xl font-bold text-gray-900">
+                <h2 className="font-heading text-2xl font-bold text-gray-900 dark:text-gray-100">
                   Edit Post
                 </h2>
 
-                <p className="mt-1 text-sm text-gray-600">
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                   Update the item information below.
                 </p>
               </div>
@@ -465,7 +465,7 @@ export default function MyPostsPanel() {
               <button
                 type="button"
                 onClick={closeEditModal}
-                className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
                 aria-label="Close edit post modal"
               >
                 <X size={22} />
@@ -476,7 +476,7 @@ export default function MyPostsPanel() {
               <div>
                 <label
                   htmlFor="editReportType"
-                  className="block font-heading text-sm font-semibold text-gray-800"
+                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
                 >
                   Report Type
                 </label>
@@ -487,7 +487,7 @@ export default function MyPostsPanel() {
                   onChange={(event) =>
                     setEditReportType(event.target.value as "lost" | "found")
                   }
-                  className="mt-2 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  className="mt-2 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 >
                   <option value="lost">Lost Item</option>
                   <option value="found">Found Item</option>
@@ -497,7 +497,7 @@ export default function MyPostsPanel() {
               <div>
                 <label
                   htmlFor="editTitle"
-                  className="block font-heading text-sm font-semibold text-gray-800"
+                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
                 >
                   Item Title
                 </label>
@@ -508,14 +508,14 @@ export default function MyPostsPanel() {
                   value={editTitle}
                   onChange={(event) => setEditTitle(event.target.value)}
                   maxLength={255}
-                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="editDescription"
-                  className="block font-heading text-sm font-semibold text-gray-800"
+                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
                 >
                   Description
                 </label>
@@ -525,14 +525,14 @@ export default function MyPostsPanel() {
                   value={editDescription}
                   onChange={(event) => setEditDescription(event.target.value)}
                   rows={3}
-                  className="mt-2 w-full resize-none rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  className="mt-2 w-full resize-none rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="editLocation"
-                  className="block font-heading text-sm font-semibold text-gray-800"
+                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
                 >
                   Location
                 </label>
@@ -543,14 +543,14 @@ export default function MyPostsPanel() {
                   value={editLocation}
                   onChange={(event) => setEditLocation(event.target.value)}
                   maxLength={255}
-                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="editImage"
-                  className="block font-heading text-sm font-semibold text-gray-800"
+                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
                 >
                   Image (Optional)
                 </label>
@@ -560,7 +560,7 @@ export default function MyPostsPanel() {
                   type="file"
                   accept="image/jpeg,image/png,image/gif,image/webp"
                   onChange={handleEditImageChange}
-                  className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-[#C8102E] file:px-4 file:py-2 file:font-heading file:text-sm file:font-semibold file:text-white hover:file:bg-[#a00d24]"
+                  className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-[#C8102E] file:px-4 file:py-2 file:font-heading file:text-sm file:font-semibold file:text-white hover:file:bg-[#a00d24] dark:text-gray-300"
                 />
 
                 {(editImagePreview || editImageUrl) && (
@@ -586,7 +586,7 @@ export default function MyPostsPanel() {
                   <p className="mt-2 text-xs text-red-700">{editImageError}</p>
                 )}
 
-                <p className="mt-2 text-xs leading-5 text-gray-500">
+                <p className="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
                   JPEG, PNG, GIF, or WebP up to 5 MB.
                 </p>
               </div>
@@ -595,7 +595,7 @@ export default function MyPostsPanel() {
                 <Button
                   type="button"
                   onClick={closeEditModal}
-                  className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100"
+                  className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
                 >
                   Cancel
                 </Button>
