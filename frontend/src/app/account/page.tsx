@@ -7,6 +7,7 @@ import MyPostsPanel from "@/components/my-posts-panel";
 import { Button } from "@/components/ui/button";
 import { apiFetch, getApiErrorMessage } from "@/lib/api";
 import { AlertTriangle, LogOut, Trash2, X } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 type UserResponse = {
   id: number;
   first_name: string;
@@ -240,6 +241,7 @@ export default function AccountPage() {
                 onClick={handleDeleteAccount}
                 className="bg-red-700 font-heading font-bold text-white hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
+                {isDeletingAccount && <Spinner className="mr-2 h-4 w-4 text-white" />}
                 {isDeletingAccount ? "Deleting..." : "Delete Account"}
               </Button>
             </div>
@@ -347,8 +349,9 @@ export default function AccountPage() {
                 <Button
                   type="submit"
                   disabled={isUpdating}
-                  className="w-full bg-[#C8102E] py-6 font-heading text-base font-bold text-white hover:bg-[#a00d24]"
+                  className="w-full bg-[#C8102E] py-6 font-heading text-base font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-60"
                 >
+                  {isUpdating && <Spinner className="mr-2 h-4 w-4 text-white" />}
                   {isUpdating ? "Saving Changes..." : "Save Changes"}
                 </Button>
 

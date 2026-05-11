@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { apiFetch, getApiErrorMessage, uploadImage } from "@/lib/api";
 import {
   CheckCircle2,
@@ -22,6 +23,7 @@ const ACCEPTED_IMAGE_TYPES = new Set([
   "image/gif",
   "image/webp",
 ]);
+
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 
 type ItemPost = {
@@ -50,9 +52,13 @@ function formatDate(date: string) {
 
 export default function MyPostsPanel() {
   const router = useRouter();
+
   const [posts, setPosts] = useState<ItemPost[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [actionPostId, setActionPostId] = useState<number | null>(null);
+  const [actionType, setActionType] = useState<"status" | "delete" | null>(
+    null,
+  );
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
 
@@ -180,6 +186,7 @@ export default function MyPostsPanel() {
       setIsError(false);
 
       let nextImageUrl: string | null = editImageUrl.trim() || null;
+
       if (editImageFile) {
         nextImageUrl = await uploadImage(editImageFile);
       }
@@ -224,6 +231,7 @@ export default function MyPostsPanel() {
   async function handleToggleReturned(post: ItemPost) {
     try {
       setActionPostId(post.id);
+      setActionType("status");
       setMessage("");
       setIsError(false);
 
@@ -252,6 +260,7 @@ export default function MyPostsPanel() {
       setMessage(getApiErrorMessage(error));
     } finally {
       setActionPostId(null);
+      setActionType(null);
     }
   }
 
@@ -266,6 +275,7 @@ export default function MyPostsPanel() {
 
     try {
       setActionPostId(postId);
+      setActionType("delete");
       setMessage("");
       setIsError(false);
 
@@ -283,6 +293,7 @@ export default function MyPostsPanel() {
       setMessage(getApiErrorMessage(error));
     } finally {
       setActionPostId(null);
+      setActionType(null);
     }
   }
 
@@ -326,7 +337,10 @@ export default function MyPostsPanel() {
 
         {isLoading && (
           <div className="flex min-h-44 items-center justify-center text-center">
-            <p className="text-sm text-gray-600 dark:text-gray-400">Loading your posts...</p>
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Spinner className="h-4 w-4 text-[#C8102E]" />
+              Loading your posts...
+            </div>
           </div>
         )}
 
@@ -352,6 +366,8 @@ export default function MyPostsPanel() {
             {posts.map((post) => {
               const isLost = post.report_type === "lost";
               const isBusy = actionPostId === post.id;
+              const isStatusBusy = isBusy && actionType === "status";
+              const isDeleteBusy = isBusy && actionType === "delete";
 
               return (
                 <article
@@ -407,7 +423,12 @@ export default function MyPostsPanel() {
                       onClick={() => handleToggleReturned(post)}
                       className="bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {post.given_back ? (
+                      {isStatusBusy ? (
+                        <>
+                          <Spinner className="mr-2 h-4 w-4 text-white" />
+                          Updating...
+                        </>
+                      ) : post.given_back ? (
                         <>
                           <RotateCcw className="mr-2 h-4 w-4" />
                           Mark Active
@@ -436,8 +457,17 @@ export default function MyPostsPanel() {
                       onClick={() => handleDeletePost(post.id)}
                       className="border border-red-200 bg-white font-heading font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900 dark:bg-gray-600 dark:text-red-400 dark:hover:bg-gray-500"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete Post
+                      {isDeleteBusy ? (
+                        <>
+                          <Spinner className="mr-2 h-4 w-4 text-red-700" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete Post
+                        </>
+                      )}
                     </Button>
                   </div>
                 </article>
@@ -451,165 +481,170 @@ export default function MyPostsPanel() {
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-6 md:items-center">
           <div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-800">
             <div className="modal-scrollbar mr-2 max-h-[90vh] overflow-y-auto p-5 pr-7">
-              <div className="flex items-start justify-between border-b border-gray-100 pb-4 dark:border-gray-700">
-              <div>
-                <h2 className="font-heading text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  Edit Post
-                </h2>
+              <div className="flex items-start justify-between border-b border-gray-100 pb-4">
+                <div>
+                  <h2 className="font-heading text-2xl font-bold text-gray-900">
+                    Edit Post
+                  </h2>
 
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  Update the item information below.
-                </p>
-              </div>
+                  <p className="mt-1 text-sm text-gray-600">
+                    Update the item information below.
+                  </p>
+                </div>
 
-              <button
-                type="button"
-                onClick={closeEditModal}
-                className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-100"
-                aria-label="Close edit post modal"
-              >
-                <X size={22} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSaveEdit} className="mt-5 space-y-4">
-              <div>
-                <label
-                  htmlFor="editReportType"
-                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
-                >
-                  Report Type
-                </label>
-
-                <select
-                  id="editReportType"
-                  value={editReportType}
-                  onChange={(event) =>
-                    setEditReportType(event.target.value as "lost" | "found")
-                  }
-                  className="mt-2 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                >
-                  <option value="lost">Lost Item</option>
-                  <option value="found">Found Item</option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="editTitle"
-                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
-                >
-                  Item Title
-                </label>
-
-                <input
-                  id="editTitle"
-                  type="text"
-                  value={editTitle}
-                  onChange={(event) => setEditTitle(event.target.value)}
-                  maxLength={255}
-                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="editDescription"
-                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
-                >
-                  Description
-                </label>
-
-                <textarea
-                  id="editDescription"
-                  value={editDescription}
-                  onChange={(event) => setEditDescription(event.target.value)}
-                  rows={3}
-                  className="mt-2 w-full resize-none rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="editLocation"
-                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
-                >
-                  Location
-                </label>
-
-                <input
-                  id="editLocation"
-                  type="text"
-                  value={editLocation}
-                  onChange={(event) => setEditLocation(event.target.value)}
-                  maxLength={255}
-                  className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="editImage"
-                  className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
-                >
-                  Image (Optional)
-                </label>
-
-                <input
-                  id="editImage"
-                  type="file"
-                  accept="image/jpeg,image/png,image/gif,image/webp"
-                  onChange={handleEditImageChange}
-                  className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-[#C8102E] file:px-4 file:py-2 file:font-heading file:text-sm file:font-semibold file:text-white hover:file:bg-[#a00d24] dark:text-gray-300"
-                />
-
-                {(editImagePreview || editImageUrl) && (
-                  <div className="mt-3 flex items-start gap-3">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={editImagePreview ?? editImageUrl}
-                      alt="Selected preview"
-                      className="h-32 w-32 rounded-md border border-gray-200 object-cover"
-                    />
-
-                    <button
-                      type="button"
-                      onClick={handleRemoveEditImage}
-                      className="font-heading text-xs font-semibold text-red-700 underline hover:text-red-900"
-                    >
-                      Remove image
-                    </button>
-                  </div>
-                )}
-
-                {editImageError && (
-                  <p className="mt-2 text-xs text-red-700">{editImageError}</p>
-                )}
-
-                <p className="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
-                  JPEG, PNG, GIF, or WebP up to 5 MB.
-                </p>
-              </div>
-
-              <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
-                <Button
+                <button
                   type="button"
                   onClick={closeEditModal}
-                  className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:hover:bg-gray-600"
+                  className="rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+                  aria-label="Close edit post modal"
                 >
-                  Cancel
-                </Button>
-
-                <Button
-                  type="submit"
-                  disabled={isSavingEdit}
-                  className="bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isSavingEdit ? "Saving..." : "Save Changes"}
-                </Button>
+                  <X size={22} />
+                </button>
               </div>
-            </form>
-          </div>
+
+              <form onSubmit={handleSaveEdit} className="mt-5 space-y-4">
+                <div>
+                  <label
+                    htmlFor="editReportType"
+                    className="block font-heading text-sm font-semibold text-gray-800"
+                  >
+                    Report Type
+                  </label>
+
+                  <select
+                    id="editReportType"
+                    value={editReportType}
+                    onChange={(event) =>
+                      setEditReportType(event.target.value as "lost" | "found")
+                    }
+                    className="mt-2 w-full rounded-md border border-gray-300 bg-white px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  >
+                    <option value="lost">Lost Item</option>
+                    <option value="found">Found Item</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="editTitle"
+                    className="block font-heading text-sm font-semibold text-gray-800"
+                  >
+                    Item Title
+                  </label>
+
+                  <input
+                    id="editTitle"
+                    type="text"
+                    value={editTitle}
+                    onChange={(event) => setEditTitle(event.target.value)}
+                    maxLength={255}
+                    className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="editDescription"
+                    className="block font-heading text-sm font-semibold text-gray-800"
+                  >
+                    Description
+                  </label>
+
+                  <textarea
+                    id="editDescription"
+                    value={editDescription}
+                    onChange={(event) => setEditDescription(event.target.value)}
+                    rows={3}
+                    className="mt-2 w-full resize-none rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="editLocation"
+                    className="block font-heading text-sm font-semibold text-gray-800"
+                  >
+                    Location
+                  </label>
+
+                  <input
+                    id="editLocation"
+                    type="text"
+                    value={editLocation}
+                    onChange={(event) => setEditLocation(event.target.value)}
+                    maxLength={255}
+                    className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                  />
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="editImage"
+                    className="block font-heading text-sm font-semibold text-gray-800"
+                  >
+                    Image (Optional)
+                  </label>
+
+                  <input
+                    id="editImage"
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
+                    onChange={handleEditImageChange}
+                    className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-[#C8102E] file:px-4 file:py-2 file:font-heading file:text-sm file:font-semibold file:text-white hover:file:bg-[#a00d24]"
+                  />
+
+                  {(editImagePreview || editImageUrl) && (
+                    <div className="mt-3 flex items-start gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={editImagePreview ?? editImageUrl}
+                        alt="Selected preview"
+                        className="h-32 w-32 rounded-md border border-gray-200 object-cover"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={handleRemoveEditImage}
+                        className="font-heading text-xs font-semibold text-red-700 underline hover:text-red-900"
+                      >
+                        Remove image
+                      </button>
+                    </div>
+                  )}
+
+                  {editImageError && (
+                    <p className="mt-2 text-xs text-red-700">
+                      {editImageError}
+                    </p>
+                  )}
+
+                  <p className="mt-2 text-xs leading-5 text-gray-500">
+                    JPEG, PNG, GIF, or WebP up to 5 MB.
+                  </p>
+                </div>
+
+                <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+                  <Button
+                    type="button"
+                    onClick={closeEditModal}
+                    className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100"
+                  >
+                    Cancel
+                  </Button>
+
+                  <Button
+                    type="submit"
+                    disabled={isSavingEdit}
+                    className="bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isSavingEdit && (
+                      <Spinner className="mr-2 h-4 w-4 text-white" />
+                    )}
+                    {isSavingEdit ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}

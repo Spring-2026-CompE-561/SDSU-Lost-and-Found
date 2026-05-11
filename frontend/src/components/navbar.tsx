@@ -62,30 +62,27 @@ export default function Navbar() {
         {/* Logo */}
         <Link
           href="/"
-          className="flex shrink-0 items-center gap-2.5"
+          className="flex h-16 w-[360px] shrink-0 items-center overflow-hidden"
         >
-          {/* Light mode logo — black text */}
+          {/* Light mode logo */}
           <Image
-            src="/sdsu_logo.png"
-            alt="SDSU San Diego State University"
-            width={220}
-            height={66}
+            src="/logo_transparentv2.png"
+            alt="SDSU Lost & Found Logo"
+            width={900}
+            height={300}
             priority
-            className="block h-10 w-auto object-contain dark:hidden"
+            className="block w-[320px] max-w-none object-contain dark:hidden"
           />
-          {/* Dark mode logo — white text */}
+
+          {/* Dark mode logo */}
           <Image
-            src="/sdsu_logo_BLACK.png"
-            alt="SDSU San Diego State University"
-            width={220}
-            height={66}
+            src="/logo_transparent.png"
+            alt="SDSU Lost & Found Logo"
+            width={900}
+            height={300}
             priority
-            className="hidden h-10 w-auto object-contain dark:block"
+            className="hidden w-[320px] max-w-none object-contain dark:block"
           />
-          <span className="h-5 w-px bg-gray-300 dark:bg-gray-600" />
-          <span className="whitespace-nowrap font-heading text-sm font-bold text-gray-900 dark:text-white">
-            Lost &amp; Found
-          </span>
         </Link>
 
         {/* Nav links + dark mode toggle */}

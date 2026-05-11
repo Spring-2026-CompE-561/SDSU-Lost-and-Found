@@ -6,6 +6,7 @@ import Link from "next/link";
 import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { apiFetch, getApiErrorMessage } from "@/lib/api";
+import { Spinner } from "@/components/ui/spinner";
 
 type SignupResponse = {
   userId: number;
@@ -298,8 +299,9 @@ export default function CreateAccountPage() {
               <Button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-[#C8102E] py-6 font-heading text-base font-bold text-white hover:bg-[#a00d24]"
+                className="w-full bg-[#C8102E] py-6 font-heading text-base font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-60"
               >
+                {isSubmitting && <Spinner className="mr-2 h-4 w-4 text-white" />}
                 {isSubmitting ? "Creating Account..." : "Create Account"}
               </Button>
             </form>
