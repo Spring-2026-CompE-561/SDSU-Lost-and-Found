@@ -84,6 +84,24 @@ class UserRepository:
         return db_user
 
     @staticmethod
+    def update_password(db: Session, db_user: User, hashed_password: str) -> User:
+        """
+        Update a user's password hash.
+
+        Args:
+            db: Database session
+            db_user: User instance to update
+            hashed_password: New bcrypt hash
+
+        Returns:
+            User: Updated user
+        """
+        db_user.password_hash = hashed_password
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+
+    @staticmethod
     def delete(db: Session, db_user: User) -> None:
         """
         Delete user.

@@ -13,6 +13,7 @@ from app.core.auth import (
     create_access_token,
     get_password_hash,
     verify_password,
+    verify_token,
 )
 from app.models.user import User
 from app.repository.user import UserRepository
@@ -138,6 +139,58 @@ class UserService:
             user.last_name = body.last_name
 
         return UserRepository.update(db, user)
+
+    @staticmethod
+    def forgot_password(db: Session, email: str) -> str:
+        """
+        Generate a 30-minute password-reset JWT for the given email.
+
+        Returns:
+            str: Signed JWT with scope "password_reset"
+
+        Raises:
+            HTTPException 404: If no account exists for that email
+        """
+        user = UserRepository.get_by_email(db, email)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No account found with that email.",
+            )
+        return create_access_token(
+            data={"sub": str(user.id), "scope": "password_reset"},
+            expires_delta=timedelta(minutes=30),
+        )
+
+    @staticmethod
+    def reset_password(db: Session, token: str, new_password: str) -> None:
+        """
+        Validate a password-reset token and update the user's password.
+
+        Raises:
+            HTTPException 400: If the token is invalid, expired, or wrong scope
+            HTTPException 404: If the user referenced by the token no longer exists
+        """
+        payload = verify_token(token)
+        if not payload or payload.get("scope") != "password_reset":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired reset token.",
+            )
+        try:
+            user_id = int(payload["sub"])
+        except (KeyError, TypeError, ValueError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid reset token.",
+            )
+        user = UserRepository.get_by_id(db, user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+        UserRepository.update_password(db, user, get_password_hash(new_password))
 
     @staticmethod
     def delete_user(db: Session, user_id: int) -> None:

@@ -7,7 +7,10 @@ from sqlalchemy.orm import Session
 from app.core.db import get_db
 from app.schemas.token import TokenPairResponse
 from app.schemas.user import (
+    ForgotPasswordRequest,
+    ForgotPasswordResponse,
     LoginRequest,
+    ResetPasswordRequest,
     SignupResponse,
     SuccessResponse,
     User,
@@ -41,6 +44,28 @@ def login(body: LoginRequest, db: DB):
     """
     _, user_id = UserService.login(db, body.email, body.password)
     return TokenService.issue_token_pair(db, user_id)
+
+
+# POST /user/forgot-password
+@api_router.post("/forgot-password", response_model=ForgotPasswordResponse)
+def forgot_password(body: ForgotPasswordRequest, db: DB):
+    """
+    Generate a password-reset token for the given SDSU email.
+    Returns the token directly (demo mode — production would email it).
+    """
+    reset_token = UserService.forgot_password(db, body.email)
+    return ForgotPasswordResponse(
+        reset_token=reset_token,
+        message="Reset token generated. Use it within 30 minutes.",
+    )
+
+
+# POST /user/reset-password
+@api_router.post("/reset-password", response_model=SuccessResponse)
+def reset_password(body: ResetPasswordRequest, db: DB):
+    """Consume a password-reset token and set a new password."""
+    UserService.reset_password(db, body.token, body.new_password)
+    return SuccessResponse()
 
 
 # GET /user/{id}

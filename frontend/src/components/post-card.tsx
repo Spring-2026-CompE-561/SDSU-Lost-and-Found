@@ -2,6 +2,18 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, MessageCircle } from "lucide-react";
 
+function makePatternBg(bgColor: string, textColor: string) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='80'><text x='0' y='62' font-family='Arial Black,Arial,sans-serif' font-size='54' font-weight='900' letter-spacing='4' fill='${textColor}'>SAN DIEGO STATE UNIVERSITY</text></svg>`;
+  return {
+    backgroundColor: bgColor,
+    backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`,
+    backgroundRepeat: "repeat" as const,
+  };
+}
+
+const lightPatternBg = makePatternBg("#C8102E", "#a50d24");
+const darkPatternBg = makePatternBg("#0a0a0a", "#242424");
+
 interface PostCardProps {
   id: number;
   user_id: number;
@@ -42,16 +54,20 @@ export default function PostCard({
 
   return (
     <article className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-      <div className="flex h-52 items-center justify-center bg-gray-100 text-sm text-gray-400 dark:bg-gray-700 dark:text-gray-500">
+      <div className="relative flex max-h-72 items-center justify-center overflow-hidden">
+        <div className="absolute inset-0 dark:hidden" style={lightPatternBg} />
+        <div className="absolute inset-0 hidden dark:block" style={darkPatternBg} />
         {image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={image_url}
             alt={title}
-            className="h-full w-full object-cover"
+            className="relative z-10 max-h-72 w-full object-contain"
           />
         ) : (
-          "[ Photo will appear here ]"
+          <span className="relative z-10 py-16 text-sm text-white/60">
+            [ Photo will appear here ]
+          </span>
         )}
       </div>
 

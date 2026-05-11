@@ -123,3 +123,33 @@ class SuccessResponse(BaseModel):
     """Schema for generic success response."""
 
     success: bool = True
+
+
+class ForgotPasswordRequest(UserBase):
+    """Schema for forgot password request — reuses SDSU email validation."""
+    pass
+
+
+class ResetPasswordRequest(BaseModel):
+    """Schema for reset password request."""
+
+    token: str
+    new_password: str = Field(..., min_length=8, max_length=20)
+
+    @field_validator("new_password")
+    @classmethod
+    def password_must_be_valid(cls, password: str) -> str:
+        if not re.search(r"[0-9]", password):
+            raise ValueError("Password must include at least 1 number")
+        if not re.search(r"[a-zA-Z]", password):
+            raise ValueError("Password must include at least 1 letter")
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
+            raise ValueError("Password must include at least 1 special character")
+        return password
+
+
+class ForgotPasswordResponse(BaseModel):
+    """Schema for forgot password response (returns token for demo use)."""
+
+    reset_token: str
+    message: str
