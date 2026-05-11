@@ -21,7 +21,7 @@ import {
   sendConversationMessage,
   startConversationWithMessage,
 } from "@/lib/api";
-
+import { Spinner } from "@/components/ui/spinner";
 type ConversationPanelProps = {
   activeConversationId?: number | null;
   refreshKey?: number;
@@ -409,8 +409,12 @@ export default function ConversationPanel({
                       disabled={isSending || !newMessage.trim()}
                       className="mt-3 w-full bg-[#C8102E] font-heading font-bold text-white hover:bg-[#a00d24] disabled:cursor-not-allowed disabled:opacity-50"
                     >
+                      {isSending ? (
+                      <Spinner className="mr-2 h-4 w-4 text-white" />
+                    ) : (
                       <Send className="mr-2 h-4 w-4" />
-                      {isSending ? "Sending..." : "Send Message"}
+                    )}
+                    {isSending ? "Sending..." : "Send Message"}
                     </Button>
                   </form>
                 </div>
