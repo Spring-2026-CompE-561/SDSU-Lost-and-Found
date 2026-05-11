@@ -66,7 +66,7 @@ export default function Navbar() {
         >
           {/* Dark logo for light mode */}
           <Image
-            src="/logo_lightv2.png"
+            src="/logo_transparentv2.png"
             alt="SDSU Lost & Found Logo"
             width={900}
             height={300}
@@ -76,7 +76,7 @@ export default function Navbar() {
 
           {/* Light logo for dark mode */}
           <Image
-            src="/logo_darkv2.png"
+            src="/logo_transparent.png"
             alt="SDSU Lost & Found Logo"
             width={900}
             height={300}
