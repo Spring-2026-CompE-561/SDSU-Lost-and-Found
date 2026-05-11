@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
 import { apiFetch } from "@/lib/api";
@@ -25,6 +26,7 @@ type ItemPost = {
   given_back: boolean;
   created_at: string;
 };
+<<<<<<< HEAD
 type PaginatedItemsResponse = {
   items: ItemPost[];
   page: number;
@@ -32,6 +34,21 @@ type PaginatedItemsResponse = {
   total: number;
   total_pages: number;
 };
+=======
+
+function makePatternBg(bgColor: string, textColor: string) {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='1200' height='80'><text x='0' y='62' font-family='Arial Black,Arial,sans-serif' font-size='54' font-weight='900' letter-spacing='4' fill='${textColor}'>SAN DIEGO STATE UNIVERSITY</text></svg>`;
+  return {
+    backgroundColor: bgColor,
+    backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`,
+    backgroundRepeat: "repeat" as const,
+  };
+}
+
+const lightPatternBg = makePatternBg("#C8102E", "#a50d24");
+const darkPatternBg = makePatternBg("#0a0a0a", "#242424");
+
+>>>>>>> 3eadd4c873542b934916467f55e884daf1b76143
 function formatDate(date: string) {
   return new Intl.DateTimeFormat("en-US", {
     month: "short",
@@ -40,8 +57,21 @@ function formatDate(date: string) {
 }
 
 export default function WelcomePage() {
+  const router = useRouter();
   const [recentPosts, setRecentPosts] = useState<ItemPost[]>([]);
   const [isLoadingRecentPosts, setIsLoadingRecentPosts] = useState(true);
+
+  function handleMessageAboutItem(ownerUserId: number) {
+    const token = localStorage.getItem("token");
+    const storedUserId = localStorage.getItem("userId");
+    const currentUserId = storedUserId ? Number(storedUserId) : null;
+    if (!token) {
+      router.push("/login?message=signin-required-message&redirect=/home");
+      return;
+    }
+    if (currentUserId === ownerUserId) return;
+    router.push("/home");
+  }
 
   useEffect(() => {
     async function loadRecentPosts() {
@@ -159,19 +189,19 @@ export default function WelcomePage() {
                         key={post.id}
                         className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
                       >
-                        {index === 0 && post.image_url && (
-                          <div className="mb-3 h-28 overflow-hidden rounded-lg bg-gray-200 dark:bg-gray-700">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={post.image_url}
-                              alt={post.title}
-                              className="h-full w-full object-cover"
-                            />
+                        {index === 0 && (
+                          <div className="relative mb-3 h-28 overflow-hidden rounded-lg">
+                            <div className="absolute inset-0 dark:hidden" style={lightPatternBg} />
+                            <div className="absolute inset-0 hidden dark:block" style={darkPatternBg} />
+                            {post.image_url && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={post.image_url}
+                                alt={post.title}
+                                className="relative z-10 h-full w-full object-contain"
+                              />
+                            )}
                           </div>
-                        )}
-
-                        {index === 0 && !post.image_url && (
-                          <div className="mb-3 h-28 rounded-lg bg-gray-200 dark:bg-gray-700" />
                         )}
 
                         <div className="flex items-start justify-between gap-3">
@@ -196,6 +226,15 @@ export default function WelcomePage() {
                             {isLost ? "Lost" : "Found"}
                           </span>
                         </div>
+
+                        <button
+                          type="button"
+                          onClick={() => handleMessageAboutItem(post.user_id)}
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-[#C8102E] px-4 py-2 font-heading text-sm font-bold text-white transition-all hover:-translate-y-px hover:bg-[#a00d24] hover:shadow-md active:translate-y-0 active:shadow-sm"
+                        >
+                          <MessageCircle size={14} />
+                          Message About Item
+                        </button>
                       </div>
                     );
                   })}

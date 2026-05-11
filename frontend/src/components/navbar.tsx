@@ -58,11 +58,11 @@ export default function Navbar() {
 
   return (
     <nav className="w-full border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 md:px-6">
+      <div className="flex h-20 w-full items-center justify-between px-4 md:px-6">
         {/* Logo */}      
         <Link
           href="/"
-          className="flex h-14 w-[300px] shrink-0 items-center overflow-hidden"
+          className="flex h-16 w-[360px] shrink-0 items-center overflow-hidden"
         >
           {/* Dark logo for light mode */}
           <Image
@@ -71,7 +71,7 @@ export default function Navbar() {
             width={900}
             height={300}
             priority
-            className="block w-[250px] max-w-none object-contain dark:hidden"
+            className="block w-[320px] max-w-none object-contain dark:hidden"
           />
 
           {/* Light logo for dark mode */}
@@ -81,7 +81,7 @@ export default function Navbar() {
             width={900}
             height={300}
             priority
-            className="hidden w-[250px] max-w-none object-contain dark:block"
+            className="hidden w-[320px] max-w-none object-contain dark:block"
           />
         </Link>
 
@@ -89,14 +89,14 @@ export default function Navbar() {
         <div className="flex items-center gap-1 font-heading text-sm font-semibold sm:gap-3">
           <Link
             href="/home"
-            className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] sm:inline"
+            className="hidden rounded-md px-2 py-1 text-gray-700 transition-all hover:bg-gray-100 hover:text-[#C8102E] dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-[#e84060] sm:inline"
           >
             Browse Items
           </Link>
 
           <Link
             href="/about"
-            className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] md:inline"
+            className="hidden rounded-md px-2 py-1 text-gray-700 transition-all hover:bg-gray-100 hover:text-[#C8102E] dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-[#e84060] md:inline"
           >
             About
           </Link>
@@ -105,14 +105,14 @@ export default function Navbar() {
             <>
               <Link
                 href="/account"
-                className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] sm:inline"
+                className="hidden rounded-md px-2 py-1 text-gray-700 transition-all hover:bg-gray-100 hover:text-[#C8102E] dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-[#e84060] sm:inline"
               >
                 My Account
               </Link>
 
               <button
                 onClick={handleSignOut}
-                className="rounded-md bg-[#C8102E] px-3 py-1.5 font-heading font-semibold text-white transition-colors hover:bg-[#a00d24]"
+                className="rounded-md bg-[#C8102E] px-3 py-1.5 font-heading font-semibold text-white transition-all hover:-translate-y-px hover:bg-[#a00d24] hover:shadow-md active:translate-y-0 active:shadow-sm"
               >
                 Sign Out
               </button>
@@ -121,14 +121,14 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                className="hidden rounded-md px-2 py-1 text-gray-700 transition-colors hover:text-[#C8102E] dark:text-gray-200 dark:hover:text-[#e84060] sm:inline"
+                className="hidden rounded-md px-2 py-1 text-gray-700 transition-all hover:bg-gray-100 hover:text-[#C8102E] dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-[#e84060] sm:inline"
               >
                 Sign In
               </Link>
 
               <Link
                 href="/create-account"
-                className="hidden items-center rounded-md bg-[#C8102E] px-3 py-1.5 text-white transition-colors hover:bg-[#a00d24] md:inline-flex"
+                className="hidden items-center rounded-md bg-[#C8102E] px-3 py-1.5 text-white transition-all hover:-translate-y-px hover:bg-[#a00d24] hover:shadow-md active:translate-y-0 active:shadow-sm md:inline-flex"
               >
                 Create Account
               </Link>
