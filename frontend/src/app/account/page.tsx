@@ -226,7 +226,7 @@ export default function AccountPage() {
                 <div>
                   <label
                     htmlFor="email"
-                    className="block font-heading text-sm font-semibold text-gray-800"
+                    className="block font-heading text-sm font-semibold text-gray-800 dark:text-gray-200"
                   >
                     SDSU Email
                   </label>
@@ -236,7 +236,7 @@ export default function AccountPage() {
                     type="email"
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
-                    className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20"
+                    className="mt-2 w-full rounded-md border border-gray-300 px-4 py-3 text-gray-900 outline-none focus:border-[#C8102E] focus:ring-2 focus:ring-[#C8102E]/20 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                   />
                 </div>
 
