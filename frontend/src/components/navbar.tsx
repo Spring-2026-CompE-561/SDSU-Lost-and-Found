@@ -59,12 +59,12 @@ export default function Navbar() {
   return (
     <nav className="w-full border-b border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
       <div className="flex h-20 w-full items-center justify-between px-4 md:px-6">
-        {/* Logo */}      
+        {/* Logo */}
         <Link
           href="/"
           className="flex h-16 w-[360px] shrink-0 items-center overflow-hidden"
         >
-          {/* Dark logo for light mode */}
+          {/* Light mode logo */}
           <Image
             src="/logo_transparentv2.png"
             alt="SDSU Lost & Found Logo"
@@ -74,7 +74,7 @@ export default function Navbar() {
             className="block w-[320px] max-w-none object-contain dark:hidden"
           />
 
-          {/* Light logo for dark mode */}
+          {/* Dark mode logo */}
           <Image
             src="/logo_transparent.png"
             alt="SDSU Lost & Found Logo"

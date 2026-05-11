@@ -303,14 +303,14 @@ export default function MyPostsPanel() {
 
   return (
     <>
-      <section className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm">
-        <div className="flex flex-col gap-4 border-b border-gray-100 pb-6 md:flex-row md:items-center md:justify-between">
+      <section className="rounded-xl border border-gray-200 bg-white p-8 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex flex-col gap-4 border-b border-gray-100 pb-6 md:flex-row md:items-center md:justify-between dark:border-gray-700">
           <div>
-            <h2 className="font-heading text-2xl font-bold text-gray-900">
+            <h2 className="font-heading text-2xl font-bold text-gray-900 dark:text-gray-100">
               My Posts
             </h2>
 
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Manage the lost and found posts created by your account.
             </p>
           </div>
@@ -349,11 +349,11 @@ export default function MyPostsPanel() {
             <div>
               <PackageOpen className="mx-auto h-12 w-12 text-[#C8102E]" />
 
-              <h3 className="mt-4 font-heading text-xl font-bold text-gray-900">
+              <h3 className="mt-4 font-heading text-xl font-bold text-gray-900 dark:text-gray-100">
                 No posts yet
               </h3>
 
-              <p className="mt-3 max-w-md text-sm leading-6 text-gray-600">
+              <p className="mt-3 max-w-md text-sm leading-6 text-gray-600 dark:text-gray-400">
                 Once you create a lost or found item post, it will appear here so
                 you can manage it.
               </p>
@@ -372,12 +372,12 @@ export default function MyPostsPanel() {
               return (
                 <article
                   key={post.id}
-                  className="rounded-xl border border-gray-200 bg-gray-50 p-5"
+                  className="rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-700 dark:bg-gray-700/50"
                 >
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div>
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-heading text-xl font-bold text-gray-900">
+                        <h3 className="font-heading text-xl font-bold text-gray-900 dark:text-gray-100">
                           {post.title}
                         </h3>
 
@@ -396,12 +396,12 @@ export default function MyPostsPanel() {
                         )}
                       </div>
 
-                      <p className="mt-2 flex items-center gap-1 text-xs text-gray-500">
+                      <p className="mt-2 flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                         <MapPin size={14} />
                         {post.location} · {formatDate(post.created_at)}
                       </p>
 
-                      <p className="mt-4 text-sm leading-6 text-gray-700">
+                      <p className="mt-4 text-sm leading-6 text-gray-700 dark:text-gray-300">
                         {post.description}
                       </p>
                     </div>
@@ -445,7 +445,7 @@ export default function MyPostsPanel() {
                       type="button"
                       disabled={isBusy}
                       onClick={() => openEditModal(post)}
-                      className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-gray-300 bg-white font-heading font-bold text-gray-900 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-600 dark:text-gray-100 dark:hover:bg-gray-500"
                     >
                       <Pencil className="mr-2 h-4 w-4" />
                       Edit Post
@@ -455,7 +455,7 @@ export default function MyPostsPanel() {
                       type="button"
                       disabled={isBusy}
                       onClick={() => handleDeletePost(post.id)}
-                      className="border border-red-200 bg-white font-heading font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="border border-red-200 bg-white font-heading font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900 dark:bg-gray-600 dark:text-red-400 dark:hover:bg-gray-500"
                     >
                       {isDeleteBusy ? (
                         <>
@@ -479,7 +479,7 @@ export default function MyPostsPanel() {
 
       {editingPost && (
         <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-6 md:items-center">
-          <div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-xl">
+          <div className="w-full max-w-xl overflow-hidden rounded-xl bg-white shadow-xl dark:bg-gray-800">
             <div className="modal-scrollbar mr-2 max-h-[90vh] overflow-y-auto p-5 pr-7">
               <div className="flex items-start justify-between border-b border-gray-100 pb-4">
                 <div>
