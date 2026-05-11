@@ -11,7 +11,88 @@ This platform centralizes lost and found reports and provides a secure environme
 - Item status tracking (Lost, Found, Returned)
 - Messaging system between users
 - Email notifications for updates and reminders
+## How to Run the Entire Project with Docker
 
+This project can be run using Docker Compose from the root folder. Docker Compose starts both the backend and frontend containers.
+
+### 1. Install Requirements
+
+Before running the project, make sure you have:
+
+- Docker Desktop installed
+- Git installed
+- Ports `3000` and `8000` available on your computer
+
+---
+
+### 2. Clone the Repository
+
+```bash
+git clone https://github.com/Spring-2026-CompE-561/SDSU-Lost-and-Found.git
+cd SDSU-Lost-and-Found
+```
+
+---
+
+### 3. Build and Start the Project
+
+From the root folder, run:
+
+```bash
+docker compose up --build
+```
+
+This command builds and starts both parts of the project:
+
+- Backend FastAPI server
+- Frontend Next.js app
+
+---
+
+### 4. Open the Application
+
+After the containers start, open these links in your browser:
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| FastAPI Docs | http://localhost:8000/docs |
+
+The frontend runs on port `3000`, and the backend runs on port `8000`.
+
+---
+
+## Useful Docker Commands
+
+### Start the project
+
+```bash
+docker compose up
+```
+
+### Start the project and rebuild containers
+
+```bash
+docker compose up --build
+```
+
+### Stop the project
+
+Press `CTRL + C` in the terminal, or run:
+
+```bash
+docker compose down
+```
+
+### Stop the project and delete the database volume
+
+Use this only when you want to reset the local database completely:
+
+```bash
+docker compose down -v
+```
+---
 # SDSU Lost & Found — Project Documentation
 
 ## Overview
@@ -296,4 +377,46 @@ project/
     ├── pyproject.toml
     ├── uv.lock
     └── Dockerfile
+```
+## Docker Services
+
+The project uses two Docker services.
+
+### Backend Service
+
+The backend service:
+
+- Builds from `backend/Dockerfile`
+- Runs FastAPI with Uvicorn
+- Uses port `8000`
+- Stores SQLite data inside a Docker volume
+- Mounts the backend source code for development reloads
+
+Backend URL:
+
+```text
+http://localhost:8000
+```
+
+API documentation:
+
+```text
+http://localhost:8000/docs
+```
+
+---
+
+### Frontend Service
+
+The frontend service:
+
+- Builds from `frontend/Dockerfile`
+- Runs the Next.js development server
+- Uses port `3000`
+- Connects to the backend through `NEXT_PUBLIC_API_BASE_URL=http://localhost:8000`
+
+Frontend URL:
+
+```text
+http://localhost:3000
 ```
