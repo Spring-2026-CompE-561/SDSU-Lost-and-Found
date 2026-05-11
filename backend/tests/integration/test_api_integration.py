@@ -119,7 +119,39 @@ class TestAuthFlow:
         """Unauthenticated requests to protected routes get 401/403."""
         resp = client.get("/api/v1/home/my-posts")
         assert resp.status_code in (401, 403)
+    def test_signup_allows_dot_variant_as_different_email(self, client):
+        first = client.post("/api/v1/user/signup", json={
+            "first_name": "Alan",
+            "last_name": "User",
+            "email": "user1@sdsu.edu",
+            "password": "TestPass1!",
+        })
+        assert first.status_code == 201
 
+        second = client.post("/api/v1/user/signup", json={
+            "first_name": "Other",
+            "last_name": "User",
+            "email": "u.ser1@sdsu.edu",
+            "password": "TestPass1!",
+        })
+        assert second.status_code == 201
+
+
+    def test_login_dot_variant_fails_for_different_email(self, client):
+        signup = client.post("/api/v1/user/signup", json={
+            "first_name": "Alan",
+            "last_name": "User",
+            "email": "user1@sdsu.edu",
+            "password": "TestPass1!",
+        })
+        assert signup.status_code == 201
+
+        login = client.post("/api/v1/user/login", json={
+            "email": "u.ser1@sdsu.edu",
+            "password": "TestPass1!",
+        })
+
+        assert login.status_code == 401
 
 # ---------------------------------------------------------------------------
 # Items flow  (mirrors: home/page.tsx → GET /home/, POST /home/, etc.)
@@ -327,7 +359,54 @@ class TestUserProfileFlow:
         client.post("/api/v1/user/signup", json=_USER_A)
         resp = client.post("/api/v1/user/signup", json=_USER_A)
         assert resp.status_code == 400
+    def test_delete_current_user_requires_auth(self, client):
+        resp = client.delete("/api/v1/user/me")
+        assert resp.status_code in (401, 403)
 
+
+    def test_delete_current_user_removes_account(self, client):
+        auth = _signup_and_login(client, _USER_A)
+
+        delete = client.delete("/api/v1/user/me", headers=auth["headers"])
+        assert delete.status_code == 200
+        assert delete.json()["success"] is True
+
+        get = client.get(f"/api/v1/user/{auth['user_id']}")
+        assert get.status_code == 404
+
+
+    def test_deleted_user_can_no_longer_login(self, client):
+        auth = _signup_and_login(client, _USER_A)
+
+        delete = client.delete("/api/v1/user/me", headers=auth["headers"])
+        assert delete.status_code == 200
+
+        login = client.post("/api/v1/user/login", json={
+            "email": _USER_A["email"],
+            "password": _USER_A["password"],
+        })
+
+        assert login.status_code == 401
+
+
+    def test_delete_current_user_removes_their_posts(self, client):
+        auth = _signup_and_login(client, _USER_A)
+
+        create = client.post("/api/v1/home/", json={
+            "title": "Item to Delete",
+            "description": "desc",
+            "location": "Library",
+            "report_type": "lost",
+        }, headers=auth["headers"])
+        assert create.status_code == 200
+
+        item_id = create.json()["id"]
+
+        delete = client.delete("/api/v1/user/me", headers=auth["headers"])
+        assert delete.status_code == 200
+
+        get_item = client.get(f"/api/v1/home/{item_id}")
+        assert get_item.status_code == 404
 # ---------------------------------------------------------------------------
 # Conversation flow  (mirrors: Message About Item → send first message)
 # ---------------------------------------------------------------------------

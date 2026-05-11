@@ -1,9 +1,7 @@
 # app/routes/user.py
 from typing import Annotated
-
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-
 from app.core.db import get_db
 from app.schemas.token import TokenPairResponse
 from app.schemas.user import (
@@ -20,11 +18,12 @@ from app.schemas.user import (
 )
 from app.services.token_service import TokenService
 from app.services.user import UserService
+from app.core.auth import get_current_user_id
 
 api_router = APIRouter(prefix="/user", tags=["users"])
 
 DB = Annotated[Session, Depends(get_db)]
-
+CurrentUserId = Annotated[int, Depends(get_current_user_id)]
 
 # POST /user/signup
 @api_router.post("/signup", response_model=SignupResponse, status_code=status.HTTP_201_CREATED)
@@ -67,6 +66,12 @@ def reset_password(body: ResetPasswordRequest, db: DB):
     UserService.reset_password(db, body.token, body.new_password)
     return SuccessResponse()
 
+# DELETE /user/me
+@api_router.delete("/me", response_model=SuccessResponse)
+def delete_current_user(db: DB, current_user_id: CurrentUserId):
+    """Delete the currently authenticated user's account."""
+    UserService.delete_user(db, current_user_id)
+    return SuccessResponse()
 
 # GET /user/{id}
 @api_router.get("/{id}", response_model=User)

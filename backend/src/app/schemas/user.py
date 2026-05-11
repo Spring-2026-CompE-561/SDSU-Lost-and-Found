@@ -13,10 +13,10 @@ class UserBase(BaseModel):
 
     email: EmailStr
 
-    @field_validator("email")
+    @field_validator("email", mode="before")
     @classmethod
-    def email_must_be_sdsu(cls, email: EmailStr) -> EmailStr:
-        """Validate that the email belongs to SDSU."""
+    def email_must_be_sdsu(cls, email: str) -> str:
+        """Normalize and validate that the email belongs to SDSU."""
         email_string = str(email).lower().strip()
 
         if not email_string.endswith("@sdsu.edu"):
@@ -69,10 +69,10 @@ class UserUpdate(BaseModel):
     last_name: str | None = Field(None, min_length=1, max_length=15)
     email: EmailStr | None = None
 
-    @field_validator("email")
+    @field_validator("email", mode="before")
     @classmethod
-    def email_must_be_sdsu(cls, email: EmailStr | None) -> EmailStr | None:
-        """Validate that updated email belongs to SDSU."""
+    def email_must_be_sdsu(cls, email: str | None) -> str | None:
+        """Normalize and validate that updated email belongs to SDSU."""
         if email is None:
             return None
 
@@ -81,7 +81,7 @@ class UserUpdate(BaseModel):
         if not email_string.endswith("@sdsu.edu"):
             raise ValueError("Email must be a valid SDSU email address.")
 
-        return email_string
+        return email_string 
     
     @field_validator("first_name", "last_name")
     @classmethod
